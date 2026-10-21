@@ -5,8 +5,10 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Price } from '@/components/Price';
 import { Eyebrow, H, Note, Page, Rule, Txt } from '@/components/ui';
 import { useDB } from '@/lib/api';
+import { COPY } from '@/lib/copy';
 import { useDevice } from '@/lib/device';
 import { getPolicy } from '@/lib/policy';
+import { AI_PRICED_CARD_IDS } from '@/lib/seed';
 import { C } from '@/lib/theme';
 
 export default function Market() {
@@ -44,6 +46,9 @@ export default function Market() {
                   {card.set} · {card.number} · {seller.id === persona ? 'you' : seller.name}
                 </Txt>
                 <Price usd={card.priceUsd} policy={policy} compact />
+                {AI_PRICED_CARD_IDS.includes(card.id) ? (
+                  <Eyebrow color={C.accent}>{COPY.market.aiPriced}</Eyebrow>
+                ) : null}
               </View>
             </Pressable>
           </Link>

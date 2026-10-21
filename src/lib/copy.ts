@@ -29,8 +29,11 @@ export const COPY = {
     /** Teen receiver, risky voice note: delivered and playable, with this banner on top. */
     scamBanner: "⚠️ This message asks you to move off Kardza. That's a common scam. Never share your number.",
     play: '▶ Play voice note',
+    offHint: 'Voice notes are off for you. Turn them on in k-ID settings to play them.',
     /** Receiver whose parent decides (kid band): nothing arrives but this. */
     hidden: 'A message was hidden for your safety. We told your parent.',
+    /** Same receiver, offer with nothing risky in it: it waits for the parent. */
+    held: "An offer is waiting for your parent's OK.",
   },
 
   why: {
