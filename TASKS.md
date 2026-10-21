@@ -1,4 +1,6 @@
-# Kardza: status and task split (updated 11:29)
+# Kardza: status and task split (updated 11:50)
+
+> **Ownership (11:50):** the partner + his Claude own all UI, copy, seed data and the demo scenario (see PARTNER_GUIDE.md). Yunha + her Claude own k-ID, Modulate, AI, FastSpring, server, hosting, README and submission. UI items in the modules below belong to the partner.
 
 Live app (laptop must be running `npx expo start --tunnel --port 8082`):
 `https://c-yunhaiee-etcpa2-mvifhw22s8xpmnaa.on.expo.app` · personas: add `?as=maya` / `?as=jordan` / `?as=mom`
