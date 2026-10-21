@@ -52,6 +52,18 @@ export type Offer = {
 
 Then I'll drop the `as PersonaId` cast in `seed.ts` and the defensive reads in `src/lib/demo.ts`.
 
+### 0b. Step 1: keep the two demo Charizards at ~$70 after your TCGplayer refresh (`src/server/prices.ts`)
+
+Your `82873e9` (on `main`, not on my branch yet) makes Reset overwrite every card's price by `name|number`. The real price of Base Set Charizard 4/102 is far above $70, so the $20-vs-$70 story breaks. Once you widen `Card` with `priceSource`, I'll seed the two Charizards with `priceSource: 'AI estimate'` (that's the "Priced by AI" label). Please skip those in `applyPrices`:
+```ts
+for (const card of db.cards) {
+  if (card.priceSource === 'AI estimate') continue; // demo cards priced by the AI price check
+  const hit = db.priceCache[`${card.name}|${card.number}`];
+  // …
+}
+```
+(Then `AI_PRICED_CARD_IDS` in `seed.ts` goes away.)
+
 ### 1. Step 2–3: store cash on offers (`src/server/trade.ts`, `src/app/api/state+api.ts`)
 
 `state+api.ts`, the `createOffer` action:
