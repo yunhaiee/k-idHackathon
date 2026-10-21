@@ -3,7 +3,7 @@
 > **Ownership (11:50):** the partner + his Claude own all UI, copy, seed data and the demo scenario (see PARTNER_GUIDE.md). Yunha + her Claude own k-ID, Modulate, AI, FastSpring, server, hosting, README and submission. UI items in the modules below belong to the partner.
 
 Live app (laptop must be running `npx expo start --tunnel --port 8082`):
-`https://c-yunhaiee-etcpa2-mvifhw22s8xpmnaa.on.expo.app` · personas: add `?as=maya` / `?as=jordan` / `?as=mom`
+`https://c-yunhaiee-etcpa2-mvikkimlmui507tx.on.expo.app` · personas: add `?as=maya` / `?as=jordan` / `?as=mom`
 
 ## Done and verified
 
@@ -23,7 +23,7 @@ Not verified yet: Maya's live parental-consent email loop · Jordan in Germany �
 
 ## Blockers (Yunha, no code)
 
-- [ ] Kai → Origins: add `https://c-yunhaiee-etcpa2-mvifhw22s8xpmnaa.on.expo.app`
+- [ ] Kai → Origins: add `https://c-yunhaiee-etcpa2-mvikkimlmui507tx.on.expo.app`
 - [ ] FastSpring: Discord message to Adam (API 401). Create products `holo-binder-theme` 2.99, `digital-slab` 4.99, `safe-trade-protection` 1.99, `collector-pro` 7.99/mo. Paste the Test Product Page URL into `.env` as `FASTSPRING_TEST_PRODUCT_BASE`
 - [ ] Pick the inboxes: Mom (Maya's parent) and Jordan's guardian (e.g. Oliver's email)
 

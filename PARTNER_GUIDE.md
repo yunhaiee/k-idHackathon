@@ -30,7 +30,7 @@ If the UI needs new data or a new server action, ask the integrations team in ch
 
 ## 2b. Rule: the demo always runs on Yunha's laptop
 
-- **Only Yunha's laptop runs the demo server.** It serves the app and the shared state (offers, messages, alerts, k-ID sessions) through Expo's tunnel: `https://c-yunhaiee-etcpa2-mvifhw22s8xpmnaa.on.expo.app`.
+- **Only Yunha's laptop runs the demo server.** It serves the app and the shared state (offers, messages, alerts, k-ID sessions) through Expo's tunnel: `https://c-yunhaiee-etcpa2-mvikkimlmui507tx.on.expo.app`.
 - **Every demo device opens that URL:** Maya's phone, Jordan's phone, and Mom (laptop browser or phone). Nobody demos from their own local server, because its data is separate and the other devices won't see it.
 - **Your laptop is for building only** (`http://localhost:8082`). Your changes reach the demo like this: you push, tell Yunha, her Claude pulls, and her running server reloads on its own (same URL, no restart).
 - **Don't restart Yunha's server** unless something is broken. A restart can change the tunnel URL, and the new URL would then have to be added to k-ID's allowed origins.
@@ -72,7 +72,7 @@ Notes:
 - React Native components (`View`, `Pressable`, `Text` via our `Txt`) render to the web through react-native-web. Write normal RN components, not raw HTML.
 - Server code lives in Expo Router API routes (`src/app/api/*+api.ts`) on the same server.
 - k-ID's real web SDK (`@k-id/core`) runs in the browser for the age gate and settings.
-- Live demo URL (Yunha's laptop through Expo's tunnel): `https://c-yunhaiee-etcpa2-mvifhw22s8xpmnaa.on.expo.app` (add `?as=maya` etc.).
+- Live demo URL (Yunha's laptop through Expo's tunnel): `https://c-yunhaiee-etcpa2-mvikkimlmui507tx.on.expo.app` (add `?as=maya` etc.).
 
 ## 5. The one rule: everything adapts through `getPolicy(user)`
 

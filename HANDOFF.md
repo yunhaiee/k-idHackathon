@@ -15,8 +15,8 @@ that session ends. Move it to the normal macOS Terminal app so it no longer depe
    ```bash
    cd ~/dev/k-idHackathon && npx expo start --tunnel --port 8082
    ```
-4. **Check the tunnel URL** it prints. It should still be `https://c-yunhaiee-etcpa2-mvifhw22s8xpmnaa.on.expo.app`.
-   If it changed: add the new URL in Kai (portal.k-id.com → Kardza → test key → Origins) and open the new
+4. **Check the tunnel URL** it prints. Since the 1:30 PM restart it is `https://c-yunhaiee-etcpa2-mvikkimlmui507tx.on.expo.app`.
+   Expo gives a new URL on every restart (the account-signed tunnel can't be pinned), so a restart always means: add the new URL in Kai (portal.k-id.com → Kardza → test key → Origins) and open the new
    link on every demo phone. Data and k-ID sessions live in `data/db.json`, so nothing else is lost.
 5. Keep the laptop plugged in and awake.
 
@@ -45,7 +45,7 @@ src/lib/seed.ts, copy.ts, demo.ts, theme.ts. Shared, tell each other first: src/
 src/app/api/state+api.ts. Don't edit Oliver's files unless I explicitly ask.
 
 DEMO RULES: the demo ALWAYS runs on my laptop: `npx expo start --tunnel --port 8082`, public URL
-https://c-yunhaiee-etcpa2-mvifhw22s8xpmnaa.on.expo.app (personas: ?as=maya|leo|anna|devon; side-by-side
+https://c-yunhaiee-etcpa2-mvikkimlmui507tx.on.expo.app (personas: ?as=maya|leo|anna|devon; side-by-side
 /demo). Don't restart the server unless broken: the tunnel URL could change and would need adding to k-ID
 (Kai portal → test key → Origins; localhost:8082 and the on.expo.app URL are already there). If the server
 isn't running, it was probably still tied to the old Claude session: follow "Step 0" at the top of

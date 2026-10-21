@@ -423,8 +423,8 @@ const DECLARE = {
   permissions: KID_PERMISSIONS.map((name) => ({ name })),
   supportEmail: 'yunhalee@stanford.edu',
   iconUrl: '/icon.png', // now the Kardza logo
-  privacyPolicyUrl: 'https://c-yunhaiee-etcpa2-mvifhw22s8xpmnaa.on.expo.app/privacy',
-  termsOfServiceUrl: 'https://c-yunhaiee-etcpa2-mvifhw22s8xpmnaa.on.expo.app/terms',
+  privacyPolicyUrl: 'https://c-yunhaiee-etcpa2-mvikkimlmui507tx.on.expo.app/privacy',
+  termsOfServiceUrl: 'https://c-yunhaiee-etcpa2-mvikkimlmui507tx.on.expo.app/terms',
 };
 ```
 `/privacy` and `/terms` are public (outside the k-ID gate). The privacy page names Claude, Gemini, Modulate and FastSpring and what each gets: check it matches what the server really sends.
