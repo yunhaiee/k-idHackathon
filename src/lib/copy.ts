@@ -38,6 +38,16 @@ export const COPY = {
     newOffer: (sender: string, card: string) => `New offer from ${sender} on your ${card}`,
   },
 
+  notify: {
+    voice: (sender: string, kind: 'text' | 'voice') => `New ${kind === 'voice' ? 'voice note' : 'message'} from ${sender}`,
+    counter: (who: string, amount: number) => `${who} countered at ${usd(amount)}`,
+    deal: (who: string) => `Deal agreed with ${who}`,
+    alert: (child: string) => `Safety alert about ${child}`,
+    tradeAsk: (child: string) => `${child} wants to accept a trade`,
+    owned: (product: string) => `You got the ${product}`,
+    enable: 'Phone notifications',
+  },
+
   intel: {
     name: 'Kardza Intelligence',
     /** Which services checked it: Modulate for voice, the AI model for text and fairness. */

@@ -69,6 +69,9 @@ export function TopBar() {
             />
           ))}
           <Chip label={COPY.demo.reset} onPress={() => act({ action: 'reset' })} color={C.danger} />
+          {typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default' ? (
+            <Chip label={COPY.notify.enable} onPress={() => void Notification.requestPermission().then(() => setDemo((d) => d))} />
+          ) : null}
           <Chip
             label={shortcut ?? COPY.demo.shortcut}
             onPress={async () => {

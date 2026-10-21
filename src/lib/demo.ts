@@ -14,7 +14,9 @@ export type OfferAnalysis = {
   checkedBy?: string[];
 };
 
-export type DemoOffer = Offer & {
+export type DemoOffer = Omit<Offer, 'status'> & {
+  /** 'countered' once the receiver counters (server: counterOffer, NOTES_FOR_YUNHA.md). */
+  status: Offer['status'] | 'countered';
   cashUsd?: number;
   counterUsd?: number;
   parentApproved?: boolean;

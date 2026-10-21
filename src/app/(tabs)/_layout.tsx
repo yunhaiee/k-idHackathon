@@ -3,6 +3,7 @@ import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { KidGate } from '@/components/kid/KidGate';
+import { Badge, Toast, useNotifications } from '@/components/Notifier';
 import { TopBar } from '@/components/TopBar';
 import { Page, Txt } from '@/components/ui';
 import { useDB } from '@/lib/api';
@@ -10,12 +11,15 @@ import { useDevice } from '@/lib/device';
 import { getPolicy } from '@/lib/policy';
 import { C } from '@/lib/theme';
 
-function TabButton({ children, isFocused, onPress }: TabTriggerSlotProps & { children: string }) {
+function TabButton({ children, isFocused, onPress, badge = 0 }: TabTriggerSlotProps & { children: string; badge?: number }) {
   return (
     <Pressable onPress={onPress} style={styles.tab}>
-      <Txt size={13} weight={isFocused ? 'semi' : 'med'} color={isFocused ? C.text : C.muted}>
-        {children}
-      </Txt>
+      <View>
+        <Txt size={13} weight={isFocused ? 'semi' : 'med'} color={isFocused ? C.text : C.muted}>
+          {children}
+        </Txt>
+        <Badge count={badge} />
+      </View>
       <View style={[styles.dot, isFocused && { backgroundColor: C.accent }]} />
     </Pressable>
   );
@@ -29,10 +33,16 @@ export default function TabsLayout() {
   const policy = user ? getPolicy(user) : null;
   const gated = !!user && policy?.status !== 'pass';
   const isParent = !!db && Object.values(db.users).some((u) => u.parentId === persona);
+  const notes = useNotifications(db, persona);
 
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       <TopBar />
+      {notes.toast && !gated ? (
+        <View style={{ position: 'relative', zIndex: 50 }}>
+          <Toast event={notes.toast} onDismiss={notes.dismiss} />
+        </View>
+      ) : null}
       {gated && user ? (
         // Same app for everyone: nobody gets in until k-ID has checked them for this country.
         Platform.OS === 'web' ? (
@@ -55,13 +65,13 @@ export default function TabsLayout() {
               <TabButton>Scan</TabButton>
             </TabTrigger>
             <TabTrigger name="inbox" href="/inbox" asChild>
-              <TabButton>Inbox</TabButton>
+              <TabButton badge={notes.unread('inbox')}>Inbox</TabButton>
             </TabTrigger>
             <TabTrigger name="shop" href="/shop" asChild>
-              <TabButton>Shop</TabButton>
+              <TabButton badge={notes.unread('shop')}>Shop</TabButton>
             </TabTrigger>
             <TabTrigger name="parent" href="/parent" asChild>
-              <TabButton>{isParent ? 'Family' : 'Me'}</TabButton>
+              <TabButton badge={notes.unread('parent')}>{isParent ? 'Family' : 'Me'}</TabButton>
             </TabTrigger>
           </TabList>
         </Tabs>

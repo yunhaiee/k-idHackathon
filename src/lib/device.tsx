@@ -10,13 +10,13 @@ const Ctx = createContext<{ persona: PersonaId; setPersona: (p: PersonaId) => vo
   setPersona: () => {},
 });
 
-/** Each device remembers which persona it is. Web also honours ?as=jordan for quick multi-window testing. */
+/** Each device remembers which persona it is. Web also honours ?as=maya or ?persona=maya for multi-window testing. */
 export function DeviceProvider({ children }: { children: ReactNode }) {
   const [persona, setP] = useState<PersonaId>('maya');
   useEffect(() => {
     const fromUrl =
       Platform.OS === 'web' && typeof window !== 'undefined'
-        ? (new URLSearchParams(window.location.search).get('as') as PersonaId | null)
+        ? (((p) => p.get('as') ?? p.get('persona'))(new URLSearchParams(window.location.search)) as PersonaId | null)
         : null;
     if (fromUrl) {
       setP(fromUrl);
