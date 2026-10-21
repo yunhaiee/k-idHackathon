@@ -7,11 +7,11 @@ import { act, useDB } from '@/lib/api';
 import { useDevice } from '@/lib/device';
 import { ACCESS_LABEL, COUNTRY_NAME, getPolicy, KID_PERMISSIONS, PERM_LABEL } from '@/lib/policy';
 import { C } from '@/lib/theme';
-import type { Country, PersonaId } from '@/lib/types';
+import { PERSONA_ORDER } from '@/lib/seed';
+import type { Country } from '@/lib/types';
 
 import { Btn, Chip, Eyebrow, Rule, Txt } from './ui';
 
-const PERSONAS: PersonaId[] = ['maya', 'jordan', 'mom'];
 const COUNTRIES: Country[] = ['US', 'DE', 'GB', 'KR'];
 
 export function TopBar() {
@@ -22,7 +22,9 @@ export function TopBar() {
   const [demo, setDemo] = useState(false);
   if (!db) return <View style={{ height: insets.top + 60, backgroundColor: C.bg }} />;
   const user = db.users[persona];
+  if (!user) return <View style={{ height: insets.top + 60, backgroundColor: C.bg }} />;
   const policy = getPolicy(user);
+  const personas = PERSONA_ORDER.filter((p) => db.users[p]);
 
   const statusLine =
     policy.status === 'pass'
@@ -40,7 +42,7 @@ export function TopBar() {
           Kardza
         </Txt>
         <View style={{ flexDirection: 'row', gap: 2 }}>
-          {PERSONAS.map((p) => (
+          {personas.map((p) => (
             <Chip
               key={p}
               label={db.users[p].name}

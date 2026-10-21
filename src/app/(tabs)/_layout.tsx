@@ -28,7 +28,7 @@ export default function TabsLayout() {
   const user = db?.users[persona];
   const policy = user ? getPolicy(user) : null;
   const gated = !!user && policy?.status !== 'pass';
-  const isParent = persona === 'mom';
+  const isParent = !!db && Object.values(db.users).some((u) => u.parentId === persona);
 
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
