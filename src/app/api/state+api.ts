@@ -39,8 +39,12 @@ export async function POST(request: Request): Promise<Response> {
 async function handle(body: Action): Promise<Response> {
   switch (body.action) {
     case 'reset': {
+      // Keep k-ID sessions for pre-onboarded personas (Jordan's guardian approval survives a rehearsal);
+      // only the live sign-up persona (Maya) starts over.
+      const prev = await readDB();
       const db = seedDB();
-      db.version = (await readDB()).version + 1;
+      db.version = prev.version + 1;
+      for (const u of Object.values(db.users)) if (!u.liveSignup) u.kid = prev.users[u.id]?.kid ?? {};
       await writeDB(db);
       return Response.json(db);
     }
