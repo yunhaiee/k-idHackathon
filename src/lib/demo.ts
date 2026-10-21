@@ -49,4 +49,13 @@ export const RISK_LABEL: Record<string, string> = {
 export const heldForParent = (policy: Policy) =>
   policy.tradeNeedsParent && policy.access['text-chat-private'] === 'parent';
 
+/**
+ * Policy's `tradeNeedsParent` is true both when a parent must approve every trade (under the consent age, Leo)
+ * and when k-ID only makes the trading permission guardian-managed (Maya, 14 US: a one-time OK in k-ID).
+ * Until policy.ts splits these (NOTES_FOR_YUNHA.md, R7a), the UI tells them apart with the k-ID band.
+ */
+export const tradeNeedsParentApproval = (policy: Policy) => policy.tradeNeedsParent && policy.band === 'kid';
+export const tradeNeedsGuardianOptIn = (policy: Policy) =>
+  !tradeNeedsParentApproval(policy) && policy.access['virtual-property-ownership'] === 'parent';
+
 export const FLAG: Record<string, string> = { US: '🇺🇸', DE: '🇩🇪', GB: '🇬🇧', KR: '🇰🇷' };

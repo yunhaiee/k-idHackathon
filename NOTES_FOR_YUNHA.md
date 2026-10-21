@@ -193,6 +193,31 @@ They're the Round 1 items **2, 3, 4** below, with one change from Oliver's new s
 - **FastSpring**: your test-product checkout from `main` is merged into `oliver-demo`. On my laptop it falls back to the labeled simulated checkout because my `.env` has no `FASTSPRING_STORE`; on yours it should open the real one. Leo → "Ask a parent" → Anna → **Approve and pay** → Leo owns it works end to end. Please make `holo-binder-theme` **$4.99** in the store.
 - **Reset** (··· → Reset demo) works today: offers, messages, alerts, purchases cleared; credibility back to 62.
 
+### R7a. Policy: split "parent approves every trade" from "guardian-managed permission" (`src/lib/policy.ts`)
+
+Bug Oliver saw: Maya (14, US) got "A grown-up checks every trade." Cause: `tradeNeedsParent = trade === 'parent' || band === 'kid'`,
+and real k-ID returns `virtual-property-ownership` **GUARDIAN-managed** for Maya, so it's true for her too. Those are two different things:
+```ts
+// Policy type
+tradeNeedsParentApproval: boolean; // a parent approves each trade (under the digital consent age)
+tradeNeedsGuardianOptIn: boolean;  // k-ID wants a guardian's one-time OK to turn trading on
+
+// getPolicy
+tradeNeedsParentApproval: band === 'kid' && trade !== 'off',
+tradeNeedsGuardianOptIn: band !== 'kid' && trade === 'parent',
+tradeNeedsParent: band === 'kid' || trade === 'parent', // keep for old callers
+```
+And use `tradeNeedsParentApproval` in `respondOffer`. The UI already behaves this way (`src/lib/demo.ts`: same two helpers from `band`), so Maya now sees
+"Trading needs a one-time OK in k-ID" instead. Once your field exists I'll switch to it. Not ⛔, but it makes "k-ID makes that call" true for Maya.
+
+### R7b. ⛔ M1: Leo's real k-ID session (Germany, 14)
+
+Leo shows **"Simulated k-ID rules"** on my laptop because I tapped the labeled fallback. The real session **does** return the consent requirement:
+k-ID showed its German "Eine erwachsene Person muss zustimmen" screen asking for a parent email (consent age 16 in DE). It stays `pending` until a parent approves.
+For the demo line **"k-ID makes that call"**, on **your** laptop: open `?as=leo`, enter a real inbox for Anna, approve the k-ID email once, and check the banner says
+**"Rules from k-ID · Leo, 14 · Germany · consent age 16"** (not "Simulated"). Reset keeps it (Leo has no `liveSignup`).
+Please confirm the claimed session has `digitalConsentAge: 16` and Leo's permissions come back GUARDIAN-managed. That's what drives every Leo screen.
+
 ## Round 1 audit: does each demo step work? (tested on my laptop, `localhost:8082`, real k-ID + live Modulate)
 
 | # | Step | Status | What's true today |

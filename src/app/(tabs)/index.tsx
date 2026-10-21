@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Price } from '@/components/Price';
 import { Eyebrow, H, Note, Page, Rule, Txt } from '@/components/ui';
 import { useDB } from '@/lib/api';
+import { tradeNeedsGuardianOptIn, tradeNeedsParentApproval } from '@/lib/demo';
 import { COPY } from '@/lib/copy';
 import { useDevice } from '@/lib/device';
 import { getPolicy } from '@/lib/policy';
@@ -27,8 +28,10 @@ export default function Market() {
         <Note tone="warn" title="Trading is off for you here">
           k-ID's rules for your age and country don't allow trading. You can still look.
         </Note>
-      ) : policy.tradeNeedsParent ? (
-        <Note title="A grown-up checks every trade">Your parent sees each trade before it happens.</Note>
+      ) : tradeNeedsParentApproval(policy) ? (
+        <Note title={COPY.market.parentChecks}>{COPY.market.parentChecksBody}</Note>
+      ) : tradeNeedsGuardianOptIn(policy) ? (
+        <Note title={COPY.market.guardianOptIn}>{COPY.market.guardianOptInBody}</Note>
       ) : null}
 
       {db.listings.map((l) => {

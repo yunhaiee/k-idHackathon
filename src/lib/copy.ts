@@ -27,6 +27,10 @@ function alertAsk(reasons: string[], pronoun: string): string {
 export const COPY = {
   market: {
     aiPriced: 'Priced by AI',
+    parentChecks: 'A grown-up checks every trade',
+    parentChecksBody: 'Your parent sees each trade before it happens.',
+    guardianOptIn: 'Trading needs a one-time OK in k-ID',
+    guardianOptInBody: 'k-ID asks a guardian once before you can trade. Ask from k-ID settings.',
   },
 
   offer: {
