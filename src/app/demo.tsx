@@ -118,6 +118,19 @@ function Phone({ id, scale, hidden }: { id: PersonaId; scale: number; hidden?: b
               name: `${FRAME}${id}`,
               title: id,
               allow: 'microphone; autoplay',
+              // The dev server sometimes fails one page render after a Reset ("Requiring unknown module").
+              // Same-origin frame: if the app hasn't shown up shortly after load, reload it (up to 3 times).
+              onLoad: (e: { currentTarget: HTMLIFrameElement }) => {
+                const frame = e.currentTarget;
+                setTimeout(() => {
+                  const tries = Number(frame.dataset.retries ?? 0);
+                  const text = frame.contentDocument?.body?.innerText ?? '';
+                  if (tries < 3 && (!/Kardza/.test(text) || /unknown module|Server Error/i.test(text))) {
+                    frame.dataset.retries = String(tries + 1);
+                    frame.contentWindow?.location.reload();
+                  }
+                }, 2500);
+              },
               style: { width: SCREEN.w, height: SCREEN.h - STATUS - HOME, border: 0, display: 'block', background: C.bg },
             })}
             <View style={{ height: HOME, alignItems: 'center', justifyContent: 'center' }}>
@@ -171,8 +184,8 @@ export default function Demo() {
   const win = useWindowDimensions();
   const [pick, setPick] = useState<Record<number, number>>({});
   const [resetting, setResetting] = useState(false);
-  // Bumped by Reset: remounts every phone frame.
-  const [nonce, setNonce] = useState(0);
+  // Bumped by Reset, one phone at a time: remounts that phone's frame.
+  const [nonce, setNonce] = useState<Record<string, number>>({});
 
   if (Platform.OS !== 'web')
     return (
@@ -223,7 +236,11 @@ export default function Demo() {
               setResetting(true);
               try {
                 await act({ action: 'reset' });
-                setNonce((n) => n + 1);
+                // One phone at a time: reloading all frames at once can trip the dev server.
+                for (const id of DEMO.phones.flat()) {
+                  setNonce((n) => ({ ...n, [id]: (n[id] ?? 0) + 1 }));
+                  await new Promise((r) => setTimeout(r, 600));
+                }
               } finally {
                 setResetting(false);
               }
@@ -253,7 +270,7 @@ export default function Demo() {
               </View>
               {/* Both phones in a pair stay mounted so the toggle never loses their state. */}
               {group.map((id, j) => (
-                <Phone key={`${id}-${nonce}`} id={id} scale={scale} hidden={j !== shown} />
+                <Phone key={`${id}-${nonce[id] ?? 0}`} id={id} scale={scale} hidden={j !== shown} />
               ))}
               {/* Same height under every phone keeps the three labels and phones aligned. */}
               <View style={{ height: CHROME.toggle - 12, justifyContent: 'center' }}>
