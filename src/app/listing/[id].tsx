@@ -7,7 +7,7 @@ import { Credibility } from '@/components/Credibility';
 import { Price } from '@/components/Price';
 import { TopBar } from '@/components/TopBar';
 import { FairMeter } from '@/components/trade/FairMeter';
-import { sendVoiceNote, VoiceRecorder, type VoiceNote } from '@/components/trade/VoiceRecorder';
+import { type RecorderHandle, sendVoiceNote, VoiceRecorder, type VoiceNote } from '@/components/trade/VoiceRecorder';
 import { Btn, Eyebrow, H, Note, Page, Rule, Txt } from '@/components/ui';
 import { act, apiUrl, refreshDB, useDB } from '@/lib/api';
 import { COPY } from '@/lib/copy';
@@ -32,6 +32,7 @@ export default function ListingScreen() {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const sending = useRef(false);
+  const recorder = useRef<RecorderHandle | null>(null);
   if (!db) return null;
   const listing = db.listings.find((l) => l.id === id);
   if (!listing)
@@ -79,6 +80,8 @@ export default function ListingScreen() {
     // Each step names itself, so a failure says where it stopped instead of failing silently.
     let step: string = COPY.offer.stepSave;
     try {
+      // Still recording when Send was tapped: finish it now and send it too, rather than dropping it.
+      const recorded = voice ?? (await recorder.current?.finish()) ?? null;
       setBusy(COPY.offer.sending);
       const offerIds: string[] = [];
       for (const l of targets) {
@@ -99,10 +102,10 @@ export default function ListingScreen() {
         setBusy(COPY.offer.checkingMessage);
         await Promise.all(offerIds.map((offerId) => sendChat(offerId, persona, text)));
       }
-      if (voice) {
+      if (recorded) {
         step = COPY.offer.stepVoice;
         setBusy(COPY.voice.checking);
-        await Promise.all(offerIds.map((offerId) => sendVoiceNote(offerId, persona, voice)));
+        await Promise.all(offerIds.map((offerId) => sendVoiceNote(offerId, persona, recorded)));
       }
       step = COPY.offer.stepDeliver;
       await refreshDB();
@@ -234,7 +237,7 @@ export default function ListingScreen() {
                 />
                 {policy.access['voice-chat'] === 'on' ? (
                   <View style={{ alignSelf: 'flex-end' }}>
-                    <VoiceRecorder value={voice} onChange={setVoice} compact />
+                    <VoiceRecorder value={voice} onChange={setVoice} compact handle={recorder} />
                   </View>
                 ) : null}
               </View>

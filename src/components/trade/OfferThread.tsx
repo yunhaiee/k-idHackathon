@@ -68,7 +68,8 @@ export function OfferThread({ db, offer, me }: { db: DB; offer: Offer; me: Perso
         {role === 'sender' ? `Your offer to ${other.name}` : `${other.name}'s offer`} ·{' '}
         {STATUS_LABEL[offer.status] ?? offer.status}
       </Eyebrow>
-      {credibility != null ? <Credibility score={credibility} prefix={role === 'sender' ? 'You' : sender.name} /> : null}
+      {/* The sender's own score is already in the top bar; the receiver sees who they're dealing with. */}
+      {credibility != null && role !== 'sender' ? <Credibility score={credibility} prefix={sender.name} /> : null}
       <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
         {offered.map((c) => (
           <Image key={c.id} source={c.image} style={{ width: 44, height: 62 }} contentFit="contain" />

@@ -1,6 +1,6 @@
 // Hold-to-record voice note for offers (browser mic via MediaRecorder), with a live timer + waveform and a
 // playback preview before sending.
-import { useEffect, useRef, useState } from 'react';
+import { type MutableRefObject, useEffect, useRef, useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 
 import { Note, Txt } from '@/components/ui';
@@ -49,15 +49,21 @@ function Waveform({ levels, color }: { levels: number[]; color: string }) {
   );
 }
 
+/** finish(): stops a running recording and resolves with it (or the note already recorded, or null). */
+export type RecorderHandle = { finish: () => Promise<VoiceNote | null> };
+
 export function VoiceRecorder({
   value,
   onChange,
   compact,
+  handle,
 }: {
   value: VoiceNote | null;
   onChange: (v: VoiceNote | null) => void;
   /** A small pill for the corner of a message box, with its status in the pill instead of below it. */
   compact?: boolean;
+  /** Lets the form finish a recording that is still running when the user taps Send. */
+  handle?: MutableRefObject<RecorderHandle | null>;
 }) {
   const [state, setState] = useState<'idle' | 'asking' | 'ready' | 'recording' | 'short' | 'denied'>('idle');
   const [seconds, setSeconds] = useState(0);
@@ -69,6 +75,18 @@ export function VoiceRecorder({
   const pressedAt = useRef(0);
   const stopAt = useRef<() => void>(() => {});
   const audio = useRef<HTMLAudioElement | null>(null);
+  /** Resolves a pending finish() once the running recording has stopped. */
+  const finished = useRef<((v: VoiceNote | null) => void) | null>(null);
+  if (handle)
+    handle.current = {
+      finish: () =>
+        recorder.current?.state === 'recording'
+          ? new Promise((resolve) => {
+              finished.current = resolve;
+              stopAt.current();
+            })
+          : Promise.resolve(value),
+    };
 
   const canRecord = Platform.OS === 'web' && typeof navigator !== 'undefined' && !!navigator.mediaDevices && !!pickMime();
 
@@ -122,13 +140,18 @@ export function VoiceRecorder({
       clearInterval(tick);
       void ctx.close();
       const secs = (Date.now() - began) / 1000;
+      const done = finished.current;
+      finished.current = null;
       if (secs < 0.6) {
         setState('short');
+        done?.(null);
         return;
       }
       setState('ready');
       const blob = new Blob(chunks, { type: rec.mimeType || mime || 'audio/webm' });
-      onChange({ kind: 'recording', blob, url: URL.createObjectURL(blob), seconds: Math.min(secs, MAX_SECONDS) });
+      const note: VoiceNote = { kind: 'recording', blob, url: URL.createObjectURL(blob), seconds: Math.min(secs, MAX_SECONDS) };
+      onChange(note);
+      done?.(note);
     };
     stopAt.current = () => rec.state === 'recording' && rec.stop();
     recorder.current = rec;
