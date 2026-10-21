@@ -80,7 +80,7 @@ export const COPY = {
 
   fair: {
     unfairTitle: "This trade isn't fair.",
-    unfairBody: (worth: number) => `Your card is worth about ${usd(worth)}.`,
+    unfairBody: (worth: number) => `Your card is worth ${usd2(worth)}.`,
     fairTitle: 'This trade looks fair.',
   },
 
@@ -139,7 +139,7 @@ export const COPY = {
     block: (sender: string) => `Block ${sender}`,
     dismiss: 'Dismiss',
     offerReview: (sender: string, band: Band, child: string, offered: number, card: string, worth: number) =>
-      `${sender} (${BAND_WORD[band]}) offered ${usd(offered)} for ${child}'s ${card}. It's worth about ${usd(worth)}.`,
+      `${sender} (${BAND_WORD[band]}) offered ${usd(offered)} for ${child}'s ${card}. It's worth ${usd2(worth)}.`,
     approve: 'Approve',
     decline: 'Decline',
     purchaseAsk: (child: string, product: string, price: number) => `${child} wants the ${product} (${usd2(price)})`,

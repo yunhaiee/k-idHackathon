@@ -108,7 +108,7 @@ export default function ListingScreen() {
           {card.set} · {card.number}
         </Eyebrow>
         <H>{card.name}</H>
-        <Price usd={card.priceUsd} policy={policy} />
+        <Price usd={card.priceUsd} source={card.priceSource} />
         {card.priceSource === AI_PRICE_SOURCE ? <Eyebrow color={C.accent}>{COPY.market.aiPriced}</Eyebrow> : null}
         {/* Who you'd trade with, and how much the marketplace trusts them. */}
         {credibilityOf(db.users[listing.sellerId]) != null ? (

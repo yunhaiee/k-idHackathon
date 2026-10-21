@@ -106,8 +106,8 @@ export default function Scan() {
           <Txt color={C.muted}>
             {result.set} · {result.number}
           </Txt>
-          <Price usd={result.estimatedPriceUsd} policy={policy} />
-          {result.priceSource && policy.band !== 'kid' ? (
+          <Price usd={result.estimatedPriceUsd} />
+          {result.priceSource ? (
             <Txt size={12} color={C.muted}>
               {result.priceSource}
             </Txt>

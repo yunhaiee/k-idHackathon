@@ -62,7 +62,7 @@ export function FairMeter({
     <View style={{ gap: 6 }}>
       {bar}
       <Txt size={13} color={lopsided ? C.danger : C.muted}>
-        {`Offered $${give.toFixed(0)} for $${want.toFixed(0)} · ${pct}% of value${lopsided ? ' · lowball' : ''}`}
+        {`Offered $${give.toFixed(0)} for $${want.toFixed(2)} · ${pct}% of value${lopsided ? ' · lowball' : ''}`}
       </Txt>
     </View>
   );

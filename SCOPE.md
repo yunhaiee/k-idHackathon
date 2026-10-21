@@ -65,7 +65,7 @@ Input: the persona's k-ID session (`permissions`, `ageStatus`, `jurisdiction`) +
 | Scan | `camera-access` + `ai-media-upload` | camera → Gemini | "Use sample card" only | hidden |
 | Collector Pro+ subscription | age ≥ `civilAge` (stretch: k-ID `KidSessionVerifyAge`) | visible | hidden | hidden |
 
-Presentation band, from k-ID's requirements: `age < digitalConsentAge` → **kid** (plain price "About $55", voice hidden on risk + parent alert with reason only, bigger buttons) · `< civilAge` → **teen** (fair range, redacted transcript + warning) · otherwise **adult** (exact price + market, full transcript + scam badge).
+Presentation band, from k-ID's requirements: `age < digitalConsentAge` → **kid** (voice hidden on risk + parent alert with reason only, bigger buttons) · `< civilAge` → **teen** (redacted transcript + warning) · otherwise **adult** (full transcript + scam badge).
 
 **Banner on every screen:** `Rules from k-ID · Jordan, 15 · Germany · digital consent age 16`. Tap it to see each permission as On / Needs a parent / Not available, using k-ID's `managedBy`.
 

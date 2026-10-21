@@ -53,7 +53,6 @@ export type Policy = {
   civilAge?: number;
   access: Record<KidPermName, Access>;
   canScan: Access;
-  priceView: 'plain' | 'range' | 'full';
   chatMode: 'none' | 'presets' | 'filtered' | 'open';
   voice: 'none' | 'hide-on-risk' | 'redact' | 'transcript+warning';
   tradeNeedsParent: boolean;
@@ -141,7 +140,6 @@ export function getPolicy(user: User): Policy {
     civilAge,
     access,
     canScan,
-    priceView: band === 'kid' ? 'plain' : band === 'teen' ? 'range' : 'full',
     chatMode,
     voice,
     canTrade: trade === 'on' || trade === 'parent',

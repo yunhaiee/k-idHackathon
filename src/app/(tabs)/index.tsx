@@ -49,7 +49,7 @@ export default function Market() {
                 <Txt size={13} color={C.muted}>
                   {card.set} · {card.number} · {seller.id === persona ? 'you' : seller.name}
                 </Txt>
-                <Price usd={card.priceUsd} policy={policy} compact />
+                <Price usd={card.priceUsd} compact />
                 {card.priceSource === AI_PRICE_SOURCE ? (
                   <Eyebrow color={C.accent}>{COPY.market.aiPriced}</Eyebrow>
                 ) : null}
@@ -69,7 +69,7 @@ export default function Market() {
           <Image source={card.image} style={styles.thumb} contentFit="contain" />
           <View style={{ flex: 1 }}>
             <Txt weight="semi">{card.name}</Txt>
-            <Price usd={card.priceUsd} policy={policy} compact />
+            <Price usd={card.priceUsd} compact />
           </View>
         </View>
       ))}

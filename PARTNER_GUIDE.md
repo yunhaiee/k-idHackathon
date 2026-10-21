@@ -86,7 +86,6 @@ Fields you can use:
 |---|---|---|
 | `band` | `'kid' \| 'teen' \| 'adult'` | Under consent age / under civil age / adult (thresholds come from k-ID per country) |
 | `access[perm]` | `'on' \| 'optin' \| 'parent' \| 'off'` | on · off but player can switch it on in Settings · a parent decides · not available |
-| `priceView` | `'plain' \| 'range' \| 'full'` | kid "About $85" · teen fair range · adult exact + market |
 | `chatMode` | `'none' \| 'presets' \| 'filtered' \| 'open'` | how messaging works |
 | `voice` | `'none' \| 'hide-on-risk' \| 'redact' \| 'transcript+warning'` | how risky voice notes are shown |
 | `canTrade`, `tradeNeedsParent` | boolean | trading allowed; kid trades need parent approval |
