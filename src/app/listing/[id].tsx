@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 
+import { Credibility } from '@/components/Credibility';
 import { Price } from '@/components/Price';
 import { TopBar } from '@/components/TopBar';
 import { FairMeter } from '@/components/trade/FairMeter';
@@ -10,6 +11,7 @@ import { sendVoiceNote, VoiceRecorder, type VoiceNote } from '@/components/trade
 import { Btn, Eyebrow, H, Note, Page, Rule, Txt } from '@/components/ui';
 import { act, refreshDB, useDB } from '@/lib/api';
 import { COPY } from '@/lib/copy';
+import { credibilityOf } from '@/lib/demo';
 import { useDevice } from '@/lib/device';
 import { goBack } from '@/lib/nav';
 import { getPolicy } from '@/lib/policy';
@@ -108,7 +110,15 @@ export default function ListingScreen() {
         <H>{card.name}</H>
         <Price usd={card.priceUsd} policy={policy} />
         {card.priceSource === AI_PRICE_SOURCE ? <Eyebrow color={C.accent}>{COPY.market.aiPriced}</Eyebrow> : null}
-        <Txt color={C.muted}>Listed by {mine ? 'you' : db.users[listing.sellerId].name}</Txt>
+        {/* Who you'd trade with, and how much the marketplace trusts them. */}
+        {credibilityOf(db.users[listing.sellerId]) != null ? (
+          <Credibility
+            score={credibilityOf(db.users[listing.sellerId])!}
+            prefix={`Listed by ${mine ? 'you' : db.users[listing.sellerId].name}`}
+          />
+        ) : (
+          <Txt color={C.muted}>Listed by {mine ? 'you' : db.users[listing.sellerId].name}</Txt>
+        )}
         <Rule />
 
         {mine ? (

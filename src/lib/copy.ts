@@ -11,8 +11,11 @@ export const BAND_WORD: Record<Band, string> = { kid: 'kid', teen: 'teen', adult
 export function credibilityLabel(score: number) {
   if (score >= 80) return 'Trusted';
   if (score >= 50) return 'Building trust';
-  return 'New or low trust';
+  return 'Low trust';
 }
+
+/** Same three tiers as the label: green, amber, red. */
+export const credibilityTone = (score: number) => (score >= 80 ? 'ok' : score >= 50 ? 'warn' : 'danger') as 'ok' | 'warn' | 'danger';
 
 /**
  * What the blocked voice note asked for, in a parent's words, from the server's risk reasons
@@ -117,6 +120,8 @@ export const COPY = {
     /** The sender of a blocked message, with the credibility hit. */
     flagged: (delta: number) => `Sharing contact info isn't allowed. −${delta} credibility.`,
     credibility: (score: number) => `Credibility ${score} · ${credibilityLabel(score)}`,
+    credibilityTitle: 'Credibility',
+    credibilityHow: 'Fair trades raise it. Blocked messages (like sharing contact info) cost 5.',
   },
 
   parent: {
