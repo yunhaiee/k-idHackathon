@@ -87,4 +87,10 @@ export function deliveryOf(db: DB, offer: Offer): { text: string; tone: 'ok' | '
   return { text: `Delivered to ${to.name}`, tone: 'ok' };
 }
 
+/** k-ID turned trading on for this player and a guardian manages it: their parent already said yes. */
+export const tradingApprovedByParent = (user: User) => {
+  const perm = user.kid[user.country]?.permissions?.find((p) => p.name === 'virtual-property-ownership');
+  return !!perm?.enabled && perm.managedBy === 'GUARDIAN' && getPolicy(user).band !== 'kid';
+};
+
 export const FLAG: Record<string, string> = { US: '🇺🇸', DE: '🇩🇪', GB: '🇬🇧', KR: '🇰🇷' };

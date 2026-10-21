@@ -31,6 +31,11 @@ export const COPY = {
   market: {
     aiPriced: 'Priced by AI',
     requested: '✓ Requested',
+    approvedByParent: '✓ Trading approved by parent',
+    marketPriced: 'TCGplayer price',
+    collection: 'Your collection',
+    cardCount: (n: number) => `${n} card${n === 1 ? '' : 's'} in your binder`,
+    binder: 'Your binder',
     countered: 'Countered',
     parentChecks: 'A grown-up checks every trade',
     parentChecksBody: 'Your parent sees each trade before it happens.',
@@ -107,6 +112,15 @@ export const COPY = {
     hidden: 'A message was hidden for your safety. We told your parent.',
     /** Same receiver, offer with nothing risky in it: it waits for the parent. */
     held: "An offer is waiting for your parent's OK.",
+  },
+
+  kidRules: {
+    title: (child: string) => `What k-ID decided for ${child}`,
+    who: (child: string, age: number, where: string, consentAge?: number) =>
+      `${child} · ${age} · ${where}${consentAge ? ` · consent age ${consentAge}` : ''}`,
+    access: (a: 'on' | 'optin' | 'parent' | 'off', child: string) =>
+      a === 'parent' ? 'Needs you' : a === 'on' ? 'Allowed' : a === 'optin' ? `${child} can turn on` : 'Not available',
+    credibility: (child: string, tier: string) => `${child}'s credibility · ${tier}`,
   },
 
   why: {
