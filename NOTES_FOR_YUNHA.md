@@ -8,6 +8,22 @@ I only touched UI, copy, seed and M5 files. Everything below that needs your fil
 Oliver's ask: no simulate button. Devon records a real voice note on the listing page, and policy decides delivery.
 The UI for all of it is on `oliver-demo`. The server pieces below are yours. **⛔ = blocks the demo.**
 
+| Step | Real today | Waiting on you |
+|---|---|---|
+| Devon: listing → Make offer → $20 → hold to record / sample → Send (+ "also send to similar") | ✅ real action, real Modulate | ⛔ cash isn't stored (Round 1 §1), shows $0 |
+| "Checking voice note…", Modulate transcript + PII + deepfake | ✅ | R2: 8s cap + AI transcript fallback |
+| Kardza Intelligence (fairness + risks + "checked by Modulate + AI") | ⚠️ fairness is price math; risks are your `ruleCheck` + Velma | ⛔ R3 `analyzeOffer()` |
+| Maya: banner, fair check, play | ✅ banner + fair check; play after she turns on voice notes in k-ID (button is inline) | — |
+| Leo: hidden + "Why am I seeing this?" | ✅ (UI holds it) | ⛔ R4 hold on the server; ⛔ R7b real DE session |
+| Anna: alert, [Block Devon] / [Let Leo see it] | ✅ alert; buttons call the real actions | ⛔ R4 `block`, `parentReviewOffer` |
+| Devon: "−5 credibility", 62 → 57 animated | ✅ copy + animation on any change | ⛔ R4 credibility logic |
+| Toasts, badges, ping, vibrate, background notifications | ✅ live across /demo frames and real phones (`?persona=maya`) | — |
+| Maya Counter $65 → Devon Accept → "Deal agreed." | ✅ buttons | ⛔ R6 `counterOffer` |
+| Shop: Maya Buy; Leo Ask a parent → Anna Approve and pay → Leo owns it | ✅ (your FastSpring code; simulated on my laptop without `FASTSPRING_STORE`) | $4.99 in the store |
+| Reset demo (···) | ✅ | — |
+| Charizards at ~$70 | ❌ your price refresh sets them to $954 / $99 | ⛔ Round 1 §0b: skip `priceSource === 'AI estimate'` |
+| PersonaId | seed casts | ⛔ Round 1 §0 |
+
 ### R2. Voice check: 8s Modulate timeout, AI transcript fallback (`src/server/modulate.ts`, `src/app/api/voice+api.ts`)
 
 Status: Modulate works live today (2–6s). Missing: the 8s cap, and a fallback for a **recorded** note
