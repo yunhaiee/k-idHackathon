@@ -5,6 +5,7 @@ import { CheckoutSheet } from '@/components/CheckoutSheet';
 import { Btn, Eyebrow, H, Note, Page, Rule, Txt } from '@/components/ui';
 import { act, useDB } from '@/lib/api';
 import { useCheckout } from '@/lib/checkout';
+import { COPY } from '@/lib/copy';
 import { useDevice } from '@/lib/device';
 import { getPolicy } from '@/lib/policy';
 import { PRODUCTS } from '@/lib/seed';
@@ -40,7 +41,7 @@ export default function Shop() {
           ) : null}
         </View>
       ) : policy.purchase === 'parent' ? (
-        <Note title={`${parentName} buys for you`}>{`Tap "Ask" and ${parentName} gets the request. k-ID: under ${policy.consentAge ?? 'the consent age'} in ${policy.countryName}.`}</Note>
+        <Note title={`${parentName} buys for you`}>{`Tap "${COPY.shop.askParent}" and ${parentName} gets the request. k-ID: under ${policy.consentAge ?? 'the consent age'} in ${policy.countryName}.`}</Note>
       ) : policy.purchase === 'limit' ? (
         <Note title={`You can spend up to $${policy.purchaseLimitUsd} per item`}>Bigger purchases need a parent.</Note>
       ) : null}
@@ -66,11 +67,11 @@ export default function Shop() {
             </Txt>
             {owned.has(p.id) ? (
               <Txt weight="semi" color={C.success}>
-                Owned
+                {COPY.shop.owned}
               </Txt>
             ) : policy.purchase === 'off' ? null : policy.purchase === 'parent' ? (
               <Btn
-                label={asked.has(p.id) ? `Asked ${parentName}` : `Ask ${parentName}`}
+                label={asked.has(p.id) ? COPY.shop.asked : COPY.shop.askParent}
                 disabled={asked.has(p.id)}
                 big={policy.bigUI}
                 onPress={() => act({ action: 'requestPurchase', persona, productId: p.id })}
@@ -80,7 +81,7 @@ export default function Shop() {
                 Over your ${policy.purchaseLimitUsd} limit · needs a parent
               </Txt>
             ) : (
-              <Btn label={`Buy · $${p.priceUsd}`} onPress={() => checkout.start(persona, p.id)} />
+              <Btn label={COPY.shop.buy(p.priceUsd)} onPress={() => checkout.start(persona, p.id)} />
             )}
           </View>
         );

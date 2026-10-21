@@ -2,10 +2,15 @@ import { useAudioPlayer } from 'expo-audio';
 import { Pressable, View } from 'react-native';
 
 import { Eyebrow, Note, Txt } from '@/components/ui';
+import { WhyChip } from '@/components/WhyChip';
 import { apiUrl } from '@/lib/api';
+import { COPY } from '@/lib/copy';
 import type { Policy } from '@/lib/policy';
 import { C } from '@/lib/theme';
 import type { Message, PersonaId, User } from '@/lib/types';
+
+/** Credibility lost for a blocked message. The server applies it (NOTES_FOR_YUNHA.md); the UI only says so. */
+const CREDIBILITY_HIT = 5;
 
 function Play({ url }: { url: string }) {
   const player = useAudioPlayer(apiUrl(url));
@@ -17,7 +22,7 @@ function Play({ url }: { url: string }) {
       }}
       style={{ paddingVertical: 6 }}>
       <Txt weight="semi" color={C.accent}>
-        ▶ Play voice note
+        {COPY.voice.play}
       </Txt>
     </Pressable>
   );
@@ -27,11 +32,13 @@ function Play({ url }: { url: string }) {
 export function MessageView({
   msg,
   viewer,
+  viewerName,
   policy,
   from,
 }: {
   msg: Message;
   viewer: PersonaId;
+  viewerName: string;
   policy: Policy;
   from: User;
 }) {
@@ -46,27 +53,43 @@ export function MessageView({
       <View style={{ gap: 4, alignSelf: 'flex-end', maxWidth: '90%' }}>
         <Eyebrow>{label}</Eyebrow>
         <Txt>{body}</Txt>
-        {risky ? (
-          <Note tone="warn" title="Flagged for safety">
-            Sharing contact info, keeping secrets, or meeting up isn't allowed on Kardza.
-          </Note>
-        ) : null}
+        {risky ? <Note tone="danger" title={COPY.sender.flagged(CREDIBILITY_HIT)} /> : null}
       </View>
     );
 
   // Kid: risky messages never reach them.
   if (policy.voice === 'hide-on-risk' && risky)
     return (
-      <View style={{ gap: 4 }}>
-        <Eyebrow>{label}</Eyebrow>
-        <Note tone="danger" title="Message hidden for your safety">
-          We told your parent. You didn't do anything wrong.
-        </Note>
+      <View style={{ gap: 8 }}>
+        <Note tone="danger" title={COPY.voice.hidden} />
+        <WhyChip name={viewerName} policy={policy} />
       </View>
     );
 
   const showFull = policy.voice === 'transcript+warning' || policy.band === 'adult';
   const text = msg.kind === 'voice' ? (showFull ? msg.transcript : msg.redacted) : body;
+
+  // Teen: the risky voice note is delivered with personal details hidden, under a scam banner. It plays
+  // once the teen has voice notes on in k-ID (player-managed); until then they read the redacted transcript.
+  if ((policy.voice === 'redact' || policy.voice === 'none') && risky && msg.kind === 'voice')
+    return (
+      <View style={{ gap: 6 }}>
+        <Eyebrow>{label}</Eyebrow>
+        <Note tone="danger" title={COPY.voice.scamBanner} />
+        {msg.audioUrl && policy.voice === 'redact' ? <Play url={msg.audioUrl} /> : null}
+        {text ? <Txt color={C.muted}>{text}</Txt> : null}
+        {policy.voice === 'none' ? (
+          <Txt size={12} color={C.muted}>
+            {COPY.voice.offHint}
+          </Txt>
+        ) : null}
+        {checked ? (
+          <Txt size={11} color={C.muted}>
+            {checked}
+          </Txt>
+        ) : null}
+      </View>
+    );
 
   return (
     <View style={{ gap: 6 }}>

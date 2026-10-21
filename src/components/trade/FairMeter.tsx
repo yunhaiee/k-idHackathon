@@ -1,6 +1,7 @@
 import { View } from 'react-native';
 
 import { Note, Txt } from '@/components/ui';
+import { COPY } from '@/lib/copy';
 import type { Policy } from '@/lib/policy';
 import { C } from '@/lib/theme';
 
@@ -31,13 +32,14 @@ export function FairMeter({
     </View>
   );
 
-  if (policy.band === 'kid' && role === 'receiver')
+  // Kids and teens receiving an offer get the verdict in words; adults get the numbers below.
+  if (policy.band !== 'adult' && role === 'receiver')
     return lopsided ? (
-      <Note tone="danger" title="This trade isn't fair">
-        {`Your card is worth about $${Math.round(want - give)} more than what you'd get.`}
+      <Note tone="danger" title={COPY.fair.unfairTitle}>
+        {COPY.fair.unfairBody(want)}
       </Note>
     ) : (
-      <Note tone="ok" title="This trade looks fair" />
+      <Note tone="ok" title={COPY.fair.fairTitle} />
     );
 
   if (role === 'sender' && policy.band !== 'adult')
