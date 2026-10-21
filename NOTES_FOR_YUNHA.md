@@ -3,7 +3,45 @@
 New demo: **Maya 14 🇺🇸 · Leo 14 🇩🇪 · Anna (Leo's mom) · Devon 25 🇺🇸**, shown side by side at **`/demo`**.
 I only touched UI, copy, seed and M5 files. Everything below that needs your files is written as the exact change.
 
-## Audit: does each demo step work? (tested on my laptop, `localhost:8082`, real k-ID + live Modulate)
+## Round 2: every demo step is a real user action
+
+Oliver's ask: no simulate button. Devon records a real voice note on the listing page, and policy decides delivery.
+The UI for all of it is on `oliver-demo`. The server pieces below are yours. **⛔ = blocks the demo.**
+
+### R2. Voice check: 8s Modulate timeout, AI transcript fallback (`src/server/modulate.ts`, `src/app/api/voice+api.ts`)
+
+Status: Modulate works live today (2–6s). Missing: the 8s cap, and a fallback for a **recorded** note
+(today a failed recording becomes `"We couldn't check this voice note"`; only the sample has a canned transcript). Not ⛔ while Modulate is up.
+
+`modulate.ts`: let the caller set the timeout.
+```ts
+export function transcribe(audio: Buffer, filename: string, timeoutMs = 8000) {
+  return post<STT>('velma-2-stt-batch', form(audio, modulateName(filename), { emotion_signal: 'true', deepfake_signal: 'true', pii_phi_tagging: 'true' }), timeoutMs);
+}
+```
+`voice+api.ts`, in the `catch` after `transcribe(...)`: Gemini can take audio (Claude can't), so transcribe with it, and label the result:
+```ts
+} catch (e) {
+  console.warn('[voice] Modulate failed:', String(e).slice(0, 200));
+  checkedBy.push('simulated'); // UI shows "(voice check simulated)"
+  try {
+    const mime = filename.endsWith('.webm') ? 'audio/webm' : 'audio/mp4';
+    const { data, model } = await geminiJSON<{ transcript: string }>(
+      [{ inline_data: { mime_type: mime, data: audio.toString('base64') } }, { text: 'Transcribe this voice note word for word. Wrap any phone number in <pii:phone>…</pii:phone>.' }],
+      { type: 'OBJECT', properties: { transcript: { type: 'STRING' } }, required: ['transcript'] },
+    );
+    tagged = data.transcript;
+    checkedBy.push(model);
+  } catch {
+    tagged = isSample ? SIMULATED_SAMPLE : '';
+  }
+}
+```
+The UI reads `checkedBy`: `Modulate` → "Kardza Intelligence · checked by Modulate + AI"; `simulated` adds "(voice check simulated)".
+
+Also check: the browser records **webm/opus** (Chrome) or **mp4** (Safari). `modulateName` only renames `.m4a`. Please confirm Modulate accepts `.webm`; if not, I can force `audio/mp4` where the browser supports it.
+
+## Round 1 audit: does each demo step work? (tested on my laptop, `localhost:8082`, real k-ID + live Modulate)
 
 | # | Step | Status | What's true today |
 |---|---|---|---|

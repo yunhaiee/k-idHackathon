@@ -38,6 +38,12 @@ export const COPY = {
     newOffer: (sender: string, card: string) => `New offer from ${sender} on your ${card}`,
   },
 
+  intel: {
+    name: 'Kardza Intelligence',
+    /** Which services checked it: Modulate for voice, the AI model for text and fairness. */
+    checkedBy: (who: string[]) => `checked by ${who.map((w) => (/claude|gemini|opus|sonnet/i.test(w) ? 'AI' : w)).join(' + ')}`,
+  },
+
   fair: {
     unfairTitle: "This trade isn't fair.",
     unfairBody: (worth: number) => `Your card is worth about ${usd(worth)}.`,

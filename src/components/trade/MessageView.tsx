@@ -12,6 +12,15 @@ import type { Message, PersonaId, User } from '@/lib/types';
 /** Credibility lost for a blocked message. The server applies it (NOTES_FOR_YUNHA.md); the UI only says so. */
 const CREDIBILITY_HIT = 5;
 
+/** "Kardza Intelligence · checked by Modulate + AI", or "(voice check simulated)" when Modulate didn't answer. */
+export function checkedLabel(msg: Message) {
+  const by = msg.checkedBy ?? [];
+  if (!by.length) return '';
+  const sim = by.includes('simulated') ? ` ${COPY.voice.simulated}` : '';
+  const who = by.filter((b) => b !== 'simulated' && b !== 'rules');
+  return `${COPY.intel.name} · ${COPY.intel.checkedBy(who.length ? who : ['rules'])}${sim}`;
+}
+
 function Play({ url }: { url: string }) {
   const player = useAudioPlayer(apiUrl(url));
   return (
@@ -45,7 +54,7 @@ export function MessageView({
   const mine = msg.fromId === viewer;
   const risky = msg.risk?.level === 'high';
   const body = msg.kind === 'voice' ? msg.transcript : msg.text;
-  const checked = msg.checkedBy?.length ? `Checked by ${msg.checkedBy.join(' · ')}` : '';
+  const checked = checkedLabel(msg);
   const label = `${mine ? 'You' : from.name} · ${msg.kind === 'voice' ? 'voice note' : 'message'}`;
 
   if (mine)
