@@ -213,28 +213,34 @@ export default function ListingScreen() {
             {give ? <FairMeter give={give} want={card.priceUsd} role="sender" policy={policy} /> : null}
 
             {policy.access['text-chat-private'] === 'on' ? (
-              <TextInput
-                value={note}
-                onChangeText={setNote}
-                placeholder={COPY.offer.messagePlaceholder}
-                placeholderTextColor={C.muted}
-                multiline
-                maxLength={500}
+              // One box: the message, with the voice recorder in its bottom-right corner.
+              <View
                 style={{
-                  minHeight: 76,
-                  color: C.text,
-                  fontFamily: F.body,
-                  fontSize: 15,
                   backgroundColor: C.surface,
                   borderWidth: 1,
                   borderColor: C.line,
                   borderRadius: 14,
                   padding: 12,
-                  textAlignVertical: 'top',
-                }}
-              />
+                  gap: 6,
+                }}>
+                <TextInput
+                  value={note}
+                  onChangeText={setNote}
+                  placeholder={COPY.offer.messagePlaceholder}
+                  placeholderTextColor={C.muted}
+                  multiline
+                  maxLength={500}
+                  style={{ minHeight: 44, color: C.text, fontFamily: F.body, fontSize: 15, padding: 0, textAlignVertical: 'top' }}
+                />
+                {policy.access['voice-chat'] === 'on' ? (
+                  <View style={{ alignSelf: 'flex-end' }}>
+                    <VoiceRecorder value={voice} onChange={setVoice} compact />
+                  </View>
+                ) : null}
+              </View>
+            ) : policy.access['voice-chat'] === 'on' ? (
+              <VoiceRecorder value={voice} onChange={setVoice} />
             ) : null}
-            {policy.access['voice-chat'] === 'on' ? <VoiceRecorder value={voice} onChange={setVoice} /> : null}
 
             {similar.length ? (
               // The whole row is the tap target, with a clear box so it reads as an option at a glance.

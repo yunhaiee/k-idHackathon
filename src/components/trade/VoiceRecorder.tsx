@@ -49,7 +49,16 @@ function Waveform({ levels, color }: { levels: number[]; color: string }) {
   );
 }
 
-export function VoiceRecorder({ value, onChange }: { value: VoiceNote | null; onChange: (v: VoiceNote | null) => void }) {
+export function VoiceRecorder({
+  value,
+  onChange,
+  compact,
+}: {
+  value: VoiceNote | null;
+  onChange: (v: VoiceNote | null) => void;
+  /** A small pill for the corner of a message box, with its status in the pill instead of below it. */
+  compact?: boolean;
+}) {
   const [state, setState] = useState<'idle' | 'asking' | 'ready' | 'recording' | 'short' | 'denied'>('idle');
   const [seconds, setSeconds] = useState(0);
   const [levels, setLevels] = useState<number[]>([]);
@@ -161,6 +170,58 @@ export function VoiceRecorder({ value, onChange }: { value: VoiceNote | null; on
     void audio.current.play();
     setPlaying(true);
   };
+
+  if (compact) {
+    const pill = {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: state === 'recording' ? C.danger : C.line,
+      backgroundColor: C.bg,
+    };
+    if (value)
+      return (
+        <View style={pill}>
+          <Pressable onPress={togglePreview} hitSlop={6}>
+            <Txt size={13} weight="semi" color={C.accent}>
+              {playing ? COPY.voice.pause : COPY.voice.playShort(fmt(value.seconds))}
+            </Txt>
+          </Pressable>
+          <Pressable onPress={clear} hitSlop={6}>
+            <Txt size={13} color={C.muted}>
+              {COPY.voice.remove}
+            </Txt>
+          </Pressable>
+        </View>
+      );
+    if (!canRecord) return null;
+    const label =
+      state === 'recording'
+        ? `● ${fmt(seconds)} / ${fmt(MAX_SECONDS)}`
+        : state === 'asking'
+          ? COPY.voice.askingShort
+          : state === 'short'
+            ? COPY.voice.shortShort
+            : state === 'denied'
+              ? COPY.voice.deniedShort
+              : COPY.voice.holdShort;
+    return (
+      <Pressable onPressIn={onPressIn} onPressOut={onPressOut} style={pill}>
+        {state === 'recording' ? (
+          <View style={{ width: 48, height: 18, overflow: 'hidden', justifyContent: 'center' }}>
+            <Waveform levels={levels.slice(-12)} color={C.danger} />
+          </View>
+        ) : null}
+        <Txt size={13} weight="semi" color={state === 'recording' || state === 'denied' ? C.danger : state === 'short' ? C.warning : C.text}>
+          {label}
+        </Txt>
+      </Pressable>
+    );
+  }
 
   if (value)
     return (

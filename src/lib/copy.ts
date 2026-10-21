@@ -107,6 +107,12 @@ export const COPY = {
     sampleAttached: 'Sample voice note attached',
     sample: 'Use sample voice note',
     remove: 'Remove',
+    /** Compact recorder inside the message box. */
+    holdShort: 'Hold to record',
+    askingShort: 'Allow the mic…',
+    shortShort: 'Too short, hold longer',
+    deniedShort: 'Mic blocked',
+    playShort: (len: string) => `Play ${len}`,
     checking: 'Checking voice note…',
     simulated: '(voice check simulated)',
     offHint: 'Voice notes are off for you. k-ID lets you turn them on yourself.',
