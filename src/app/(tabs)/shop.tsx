@@ -41,7 +41,7 @@ export default function Shop() {
           ) : null}
         </View>
       ) : policy.purchase === 'parent' ? (
-        <Note title={`${parentName} buys for you`}>{`Tap "Ask" and ${parentName} gets the request. k-ID: under ${policy.consentAge ?? 'the consent age'} in ${policy.countryName}.`}</Note>
+        <Note title={`${parentName} buys for you`}>{`Tap "${COPY.shop.askParent}" and ${parentName} gets the request. k-ID: under ${policy.consentAge ?? 'the consent age'} in ${policy.countryName}.`}</Note>
       ) : policy.purchase === 'limit' ? (
         <Note title={`You can spend up to $${policy.purchaseLimitUsd} per item`}>Bigger purchases need a parent.</Note>
       ) : null}
