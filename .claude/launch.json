@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "kardza",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "expo",
+        "start",
+        "--tunnel",
+        "ngrok",
+        "--port",
+        "8082"
+      ],
+      "port": 8082,
+      "autoPort": false
+    }
+  ]
+}
