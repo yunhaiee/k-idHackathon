@@ -47,6 +47,13 @@ export const COPY = {
     newOffer: (sender: string, card: string) => `New offer from ${sender} on your ${card}`,
   },
 
+  sent: {
+    title: (n: number) => (n > 1 ? `✓ ${n} offers sent` : '✓ Offer sent'),
+    checked: 'Kardza Intelligence checked it before delivery.',
+    flagged: "Kardza Intelligence flagged your voice note: sharing contact info isn't allowed (−5 credibility).",
+    you: '✓ Sent',
+  },
+
   notify: {
     voice: (sender: string, kind: 'text' | 'voice') => `New ${kind === 'voice' ? 'voice note' : 'message'} from ${sender}`,
     counter: (who: string, amount: number) => `${who} countered at ${usd(amount)}`,
@@ -132,6 +139,7 @@ export const COPY = {
 
   deal: {
     counter: 'Counter',
+    reply: 'Reply',
     counterAt: (amount: number) => `Counter at ${usd(amount)}`,
     waiting: (amount: number, who: string) => `You countered at ${usd(amount)}. Waiting for ${who}.`,
     accept: 'Accept',

@@ -44,6 +44,7 @@ export function MessageView({
   viewer,
   viewerName,
   released,
+  delivery,
   policy,
   from,
 }: {
@@ -52,6 +53,8 @@ export function MessageView({
   viewerName: string;
   /** The receiver's parent let this through ("Let … see it"): show it with the scam warning. */
   released?: boolean;
+  /** Sender's view: where the offer stands for the receiver ("Delivered to Maya", "Held for Anna's review"). */
+  delivery?: string;
   policy: Policy;
   from: User;
 }) {
@@ -61,11 +64,20 @@ export function MessageView({
   const checked = checkedLabel(msg);
   const label = `${mine ? 'You' : from.name} · ${msg.kind === 'voice' ? 'voice note' : 'message'}`;
 
+  // Own message: a chat bubble on the right, with what happened to it underneath.
   if (mine)
     return (
-      <View style={{ gap: 4, alignSelf: 'flex-end', maxWidth: '90%' }}>
-        <Eyebrow>{label}</Eyebrow>
-        <Txt>{body}</Txt>
+      <View style={{ gap: 6, alignSelf: 'flex-end', maxWidth: '88%' }}>
+        <View style={{ backgroundColor: C.surface2, borderRadius: 16, borderBottomRightRadius: 4, padding: 12, gap: 6 }}>
+          <Eyebrow>{label}</Eyebrow>
+          {msg.audioUrl ? <Play url={msg.audioUrl} /> : null}
+          <Txt size={14} color={msg.kind === 'voice' ? C.muted : C.text}>
+            {body}
+          </Txt>
+        </View>
+        <Txt size={12} color={risky ? C.danger : C.success} style={{ alignSelf: 'flex-end' }}>
+          {[COPY.sent.you, delivery].filter(Boolean).join(' · ')}
+        </Txt>
         {risky ? <Note tone="danger" title={COPY.sender.flagged(CREDIBILITY_HIT)} /> : null}
       </View>
     );
