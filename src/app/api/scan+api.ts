@@ -1,4 +1,4 @@
-// Card photo → Gemini: identify, estimate price, flag anything that looks off. Never claims "authentic".
+// Card photo → AI (Claude, Gemini fallback): identify, estimate price, flag anything that looks off. Never claims "authentic".
 import type { ScanResult } from '@/lib/types';
 import { aiJSON } from '@/server/ai';
 import { marketPrice } from '@/server/prices';
