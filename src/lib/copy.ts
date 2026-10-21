@@ -60,6 +60,14 @@ export const COPY = {
     newOffer: (sender: string, card: string) => `New offer from ${sender} on your ${card}`,
   },
 
+  check: {
+    checking: 'Checking before sending…',
+    title: (kind: 'text' | 'voice') => `Send this ${kind === 'voice' ? 'voice note' : 'message'}?`,
+    body: (delta: number) => `Kardza Intelligence will flag it. Sending it costs ${delta} credibility, and a child's parent may be told.`,
+    edit: 'Edit',
+    sendAnyway: 'Send anyway',
+  },
+
   thread: {
     show: (kind: 'text' | 'voice') => (kind === 'voice' ? 'Show voice note' : 'Show message'),
     hide: 'Hide',

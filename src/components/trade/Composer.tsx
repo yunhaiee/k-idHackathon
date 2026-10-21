@@ -5,9 +5,12 @@ import { Platform, TextInput, View } from 'react-native';
 
 import { Btn, Chip, Note, Txt } from '@/components/ui';
 import { apiUrl, postJSON, refreshDB } from '@/lib/api';
+import { COPY } from '@/lib/copy';
 import type { Policy } from '@/lib/policy';
 import { C, F } from '@/lib/theme';
 import type { PersonaId } from '@/lib/types';
+
+import { useSendCheck } from './SendCheck';
 
 const PRESETS = ['Is this still available?', 'Can you add another card?', 'No thanks', "Deal! Let's trade."];
 
@@ -29,11 +32,13 @@ export function Composer({ offerId, me, policy }: { offerId: string; me: Persona
   const [busy, setBusy] = useState<string | null>(null);
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const rec = useAudioRecorderState(recorder);
+  const { confirmSend, modal: sendCheck } = useSendCheck(me);
 
   const sendText = async (t: string) => {
     if (!t.trim()) return;
     setBusy('Checking message…');
     try {
+      if (!(await confirmSend({ text: t }))) return;
       await postJSON('/api/message', { offerId, fromId: me, text: t });
       setText('');
       await refreshDB();
@@ -48,6 +53,12 @@ export function Composer({ offerId, me, policy }: { offerId: string; me: Persona
       if (!recorder.uri) return;
       setBusy('Modulate is listening…');
       try {
+        if (Platform.OS === 'web') {
+          const blob = await (await fetch(recorder.uri)).blob();
+          setBusy(COPY.check.checking);
+          if (!(await confirmSend({ voice: blob }))) return;
+          setBusy('Modulate is listening…');
+        }
         await uploadVoice(offerId, me, recorder.uri);
         await refreshDB();
       } finally {
@@ -67,6 +78,7 @@ export function Composer({ offerId, me, policy }: { offerId: string; me: Persona
 
   return (
     <View style={{ gap: 10 }}>
+      {sendCheck}
       {chatOff ? (
         <View style={{ gap: 6 }}>
           <Note title="Messages are off for you">

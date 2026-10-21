@@ -7,6 +7,7 @@ import { Credibility } from '@/components/Credibility';
 import { Price } from '@/components/Price';
 import { TopBar } from '@/components/TopBar';
 import { FairMeter } from '@/components/trade/FairMeter';
+import { useSendCheck } from '@/components/trade/SendCheck';
 import { type RecorderHandle, sendVoiceNote, VoiceRecorder, type VoiceNote } from '@/components/trade/VoiceRecorder';
 import { Btn, Eyebrow, H, Note, Page, Rule, Txt } from '@/components/ui';
 import { act, apiUrl, refreshDB, useDB } from '@/lib/api';
@@ -33,6 +34,7 @@ export default function ListingScreen() {
   const [error, setError] = useState<string | null>(null);
   const sending = useRef(false);
   const recorder = useRef<RecorderHandle | null>(null);
+  const { confirmSend, modal: sendCheck } = useSendCheck(persona);
   if (!db) return null;
   const listing = db.listings.find((l) => l.id === id);
   if (!listing)
@@ -82,6 +84,9 @@ export default function ListingScreen() {
     try {
       // Still recording when Send was tapped: finish it now and send it too, rather than dropping it.
       const recorded = voice ?? (await recorder.current?.finish()) ?? null;
+      // Would Kardza Intelligence flag it? Then the sender confirms before anything is sent.
+      setBusy(COPY.check.checking);
+      if (!(await confirmSend({ text: note.trim() || undefined, voice: recorded?.blob }))) return;
       setBusy(COPY.offer.sending);
       const offerIds: string[] = [];
       for (const l of targets) {
@@ -122,6 +127,7 @@ export default function ListingScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       <TopBar />
+      {sendCheck}
       <Page>
         {/* Back closes the offer form first, then leaves the listing. */}
         <Btn label="Back" kind="quiet" onPress={() => (open ? setOpen(false) : goBack())} style={{ alignSelf: 'flex-start' }} />
