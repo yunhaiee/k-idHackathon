@@ -24,6 +24,10 @@ export function useCheckout() {
     payingFor?: PersonaId;
     account?: string;
     since?: number;
+    /** FastSpring checkout link, kept so the sheet can offer "Open FastSpring checkout" if the pop-up was blocked. */
+    url?: string;
+    /** True when the browser blocked the automatic checkout window (e.g. inside a /demo iframe). */
+    blocked?: boolean;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,11 +41,24 @@ export function useCheckout() {
       setError(res.error);
       return;
     }
+    let blocked = false;
     if (res.url) {
       if (tab) tab.location.href = res.url;
+      // No tab means the pop-up was blocked (frames are stricter). Opening later would be blocked too, so on web
+      // keep the link and let the sheet open it from a direct tap.
+      else if (Platform.OS === 'web') blocked = true;
       else await WebBrowser.openBrowserAsync(res.url);
     } else tab?.close();
-    setPending({ persona, productId, via: res.via ?? 'simulated', account: res.account, since: res.since, ...opts });
+    setPending({
+      persona,
+      productId,
+      via: res.via ?? 'simulated',
+      account: res.account,
+      since: res.since,
+      url: res.url ?? undefined,
+      blocked,
+      ...opts,
+    });
   };
 
   /** Called after the buyer finishes checkout (FastSpring tab closed, or simulated Pay tapped). */
