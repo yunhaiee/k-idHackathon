@@ -58,13 +58,14 @@ function SamplePreview() {
 }
 
 export function VoiceRecorder({ value, onChange }: { value: VoiceNote | null; onChange: (v: VoiceNote | null) => void }) {
-  const [state, setState] = useState<'idle' | 'asking' | 'ready' | 'recording' | 'denied'>('idle');
+  const [state, setState] = useState<'idle' | 'asking' | 'ready' | 'recording' | 'short' | 'denied'>('idle');
   const [seconds, setSeconds] = useState(0);
   const [levels, setLevels] = useState<number[]>([]);
   const [playing, setPlaying] = useState(false);
   const stream = useRef<MediaStream | null>(null);
   const recorder = useRef<MediaRecorder | null>(null);
-  const holding = useRef(false);
+  /** When the current press began: a long press is hold-to-record, a quick tap (or a cancelled press) toggles. */
+  const pressedAt = useRef(0);
   const stopAt = useRef<() => void>(() => {});
   const audio = useRef<HTMLAudioElement | null>(null);
 
@@ -79,9 +80,9 @@ export function VoiceRecorder({ value, onChange }: { value: VoiceNote | null; on
   );
 
   const start = async () => {
-    holding.current = true;
     if (!stream.current) {
-      // First use: the browser asks for the mic. If the finger lifted meanwhile, wait for the next hold.
+      // First use: the browser asks for the mic. The prompt usually cancels the press, so recording then
+      // continues in tap mode (tap again to stop).
       setState('asking');
       try {
         stream.current = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -89,10 +90,7 @@ export function VoiceRecorder({ value, onChange }: { value: VoiceNote | null; on
         setState('denied');
         return;
       }
-      if (!holding.current) {
-        setState('ready');
-        return;
-      }
+      pressedAt.current = 0;
     }
     const mime = pickMime();
     const rec = new MediaRecorder(stream.current, mime ? { mimeType: mime } : undefined);
@@ -123,8 +121,11 @@ export function VoiceRecorder({ value, onChange }: { value: VoiceNote | null; on
       clearInterval(tick);
       void ctx.close();
       const secs = (Date.now() - began) / 1000;
+      if (secs < 0.6) {
+        setState('short');
+        return;
+      }
       setState('ready');
-      if (secs < 0.6) return; // a tap, not a recording
       const blob = new Blob(chunks, { type: rec.mimeType || mime || 'audio/webm' });
       onChange({ kind: 'recording', blob, url: URL.createObjectURL(blob), seconds: Math.min(secs, MAX_SECONDS) });
     };
@@ -134,9 +135,19 @@ export function VoiceRecorder({ value, onChange }: { value: VoiceNote | null; on
     setState('recording');
   };
 
-  const stop = () => {
-    holding.current = false;
-    stopAt.current();
+  const onPressIn = () => {
+    if (recorder.current?.state === 'recording') {
+      stopAt.current(); // tap mode: second tap stops
+      return;
+    }
+    pressedAt.current = Date.now();
+    void start();
+  };
+
+  const onPressOut = () => {
+    // Released after a real hold: stop. A release within 0.5s (a tap, or the browser cancelling the press)
+    // leaves it recording until the next tap, so it never starts and vanishes.
+    if (recorder.current?.state === 'recording' && pressedAt.current && Date.now() - pressedAt.current > 500) stopAt.current();
   };
 
   const clear = () => {
@@ -184,8 +195,8 @@ export function VoiceRecorder({ value, onChange }: { value: VoiceNote | null; on
     <View style={{ gap: 8 }}>
       {canRecord ? (
         <Pressable
-          onPressIn={start}
-          onPressOut={stop}
+          onPressIn={onPressIn}
+          onPressOut={onPressOut}
           style={{
             flexDirection: 'row',
             alignItems: 'center',
@@ -201,11 +212,18 @@ export function VoiceRecorder({ value, onChange }: { value: VoiceNote | null; on
             {state === 'recording' ? `● ${fmt(seconds)} / ${fmt(MAX_SECONDS)}` : COPY.voice.hold}
           </Txt>
           {state === 'recording' ? <Waveform levels={levels} color={C.danger} /> : null}
+          <Txt size={11} color={C.muted}>
+            {state === 'recording' ? COPY.voice.stopHint : ''}
+          </Txt>
         </Pressable>
       ) : null}
       {state === 'asking' ? (
         <Txt size={13} color={C.muted}>
           {COPY.voice.asking}
+        </Txt>
+      ) : state === 'short' ? (
+        <Txt size={13} color={C.warning}>
+          {COPY.voice.short}
         </Txt>
       ) : state === 'ready' && !value ? (
         <Txt size={13} color={C.muted}>
