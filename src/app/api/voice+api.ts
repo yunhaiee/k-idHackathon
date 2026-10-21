@@ -79,7 +79,13 @@ export async function POST(request: Request) {
     checkedBy,
     createdAt: Date.now(),
   };
-  const db = await mutate((d) => deliverMessage(d, msg));
+  let db;
+  try {
+    db = await mutate((d) => deliverMessage(d, msg));
+  } catch (e) {
+    // e.g. the receiver's parent blocked this sender
+    return Response.json({ error: String((e as Error).message ?? e) }, { status: 403 });
+  }
 
   // Slow path: Velma behaviors. Not awaited (runTask keeps serverless alive); clients see it on the next poll.
   if (checkedBy.includes('Modulate')) {

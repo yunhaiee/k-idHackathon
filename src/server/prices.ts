@@ -1,4 +1,5 @@
 /// <reference types="node" />
+import { AI_PRICE_SOURCE } from '@/lib/seed';
 import type { DB } from '@/lib/types';
 
 import { mutate, readDB } from './db';
@@ -74,6 +75,8 @@ export async function lookupCardPrices(cards: { name: string; number: string; se
 export function applyPrices(db: DB, fresh: Record<string, { usd: number; source: string }> = {}) {
   db.priceCache = { ...(db.priceCache ?? {}), ...fresh };
   for (const card of db.cards) {
+    // Cards priced by Kardza's AI price check keep that price (the demo's ~$70 Charizards).
+    if (card.priceSource === AI_PRICE_SOURCE) continue;
     const hit = db.priceCache[`${card.name}|${card.number}`];
     if (hit) {
       card.priceUsd = hit.usd;
@@ -84,7 +87,7 @@ export function applyPrices(db: DB, fresh: Record<string, { usd: number; source:
 
 export async function refreshPrices() {
   const db = await readDB();
-  const fresh = await lookupCardPrices(db.cards);
+  const fresh = await lookupCardPrices(db.cards.filter((c) => c.priceSource !== AI_PRICE_SOURCE));
   const updated = await mutate((d) => applyPrices(d, fresh));
   return { found: Object.keys(fresh).length, of: updated.cards.length };
 }

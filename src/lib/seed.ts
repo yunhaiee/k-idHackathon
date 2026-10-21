@@ -2,15 +2,14 @@ import type { DB, PersonaId, Product, User } from './types';
 
 const img = (set: string, n: number) => `https://images.pokemontcg.io/${set}/${n}_hires.png`;
 
-// PersonaId in types.ts still lists the old cast (maya/jordan/mom). Until it's widened (NOTES_FOR_YUNHA.md),
-// seed ids go through this cast. People and items only: every rule comes from k-ID via getPolicy.
-const P = (id: string) => id as PersonaId;
+// People and items only: every rule comes from k-ID via getPolicy.
+const P = (id: PersonaId) => id;
 
 /** Seeded user + the demo's credibility score (not in User yet; see NOTES_FOR_YUNHA.md). */
 export type SeedUser = User & { credibility?: number; pronoun?: string };
 
 /** Persona order for the switcher and the /demo phones. */
-export const PERSONA_ORDER = ['maya', 'leo', 'devon', 'anna'].map(P);
+export const PERSONA_ORDER: PersonaId[] = ['maya', 'leo', 'devon', 'anna'];
 
 /** The /demo scenario: who sends the lowball, on which card, and which phones sit side by side. */
 export const DEMO = {

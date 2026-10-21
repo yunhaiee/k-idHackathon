@@ -1,4 +1,4 @@
-export type PersonaId = 'maya' | 'jordan' | 'mom';
+export type PersonaId = 'maya' | 'leo' | 'anna' | 'devon';
 export type Country = 'US' | 'DE' | 'GB' | 'KR';
 
 export type KidStatus = 'running' | 'pending' | 'pass' | 'prohibited' | 'fail' | 'error';
@@ -42,6 +42,12 @@ export type User = {
   /** Signs up live through the full k-ID widget (no age passed in). */
   liveSignup?: boolean;
   kid: Partial<Record<Country, KidRecord>>;
+  /** Trust score shown on offers; lowered when one of their messages is blocked. */
+  credibility?: number;
+  /** Players this child's parent blocked: they can't send offers or messages to this user. */
+  blocked?: PersonaId[];
+  /** Object pronoun for parent alerts ("asking him…"); copy uses "them" when unset. */
+  pronoun?: string;
 };
 
 export type Card = {
@@ -64,7 +70,17 @@ export type Offer = {
   fromId: PersonaId;
   toId: PersonaId;
   offeredCardIds: string[];
-  status: 'pending' | 'needs-parent' | 'accepted' | 'declined';
+  /** Cash part of the offer, in USD. */
+  cashUsd?: number;
+  /** Receiver's counter, in cash (status 'countered'). */
+  counterUsd?: number;
+  /**
+   * held = waiting for the receiver's parent to review it before the child sees anything;
+   * needs-parent = the child agreed, the parent gives the final OK.
+   */
+  status: 'held' | 'pending' | 'countered' | 'needs-parent' | 'accepted' | 'declined';
+  /** The receiver's parent let this offer through ("Let … see it"). */
+  parentApproved?: boolean;
   createdAt: number;
 };
 

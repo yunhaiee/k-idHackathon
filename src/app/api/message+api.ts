@@ -8,17 +8,22 @@ import { deliverMessage } from '@/server/trade';
 export async function POST(request: Request) {
   const { offerId, fromId, text } = (await request.json()) as { offerId: string; fromId: PersonaId; text: string };
   const risk = await assessText(text);
-  const db = await mutate((d) =>
-    deliverMessage(d, {
-      id: uid('m'),
-      offerId,
-      fromId,
-      kind: 'text',
-      text,
-      risk: { level: risk.level, reasons: risk.reasons },
-      checkedBy: ['rules', ...(risk.model ? [risk.model] : [])],
-      createdAt: Date.now(),
-    }),
-  );
+  let db;
+  try {
+    db = await mutate((d) =>
+      deliverMessage(d, {
+        id: uid('m'),
+        offerId,
+        fromId,
+        kind: 'text',
+        text,
+        risk: { level: risk.level, reasons: risk.reasons },
+        checkedBy: ['rules', ...(risk.model ? [risk.model] : [])],
+        createdAt: Date.now(),
+      }),
+    );
+  } catch (e) {
+    return Response.json({ error: String((e as Error).message ?? e) }, { status: 403 });
+  }
   return Response.json(db);
 }

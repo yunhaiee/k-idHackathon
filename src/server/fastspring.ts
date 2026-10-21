@@ -21,9 +21,10 @@ export const storeHost = () => env('FASTSPRING_STORE');
 
 /** The buyer of record. A parent paying for a child is the buyer (never the child). */
 const BUYERS: Record<PersonaId, { first: string; last: string; email: string }> = {
-  mom: { first: 'Alex', last: 'Parent', email: 'alex.parent@example.com' },
-  jordan: { first: 'Jordan', last: 'Teen', email: 'jordan.teen@example.com' },
-  maya: { first: 'Maya', last: 'Kid', email: 'maya.kid@example.com' },
+  maya: { first: 'Maya', last: 'Teen', email: 'maya.teen@example.com' },
+  leo: { first: 'Leo', last: 'Kid', email: 'leo.kid@example.com' },
+  anna: { first: 'Anna', last: 'Parent', email: 'anna.parent@example.com' },
+  devon: { first: 'Devon', last: 'Adult', email: 'devon.adult@example.com' },
 };
 
 export async function createSession(buyer: PersonaId, productId: string) {
