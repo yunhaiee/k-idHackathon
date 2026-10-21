@@ -165,5 +165,7 @@ export const COPY = {
     shortcut: 'Demo shortcut',
     sending: 'Sending…',
     hint: 'Every phone is live. ··· in any phone: Reset demo, country, Demo shortcut.',
+    tagline: 'One marketplace for every age · rules from k-ID',
+    live: 'Live · all phones in sync',
   },
 };
