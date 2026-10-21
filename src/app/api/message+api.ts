@@ -8,7 +8,7 @@ import { deliverMessage } from '@/server/trade';
 export async function POST(request: Request) {
   const { offerId, fromId, text } = (await request.json()) as { offerId: string; fromId: PersonaId; text: string };
   const risk = await assessText(text);
-  const db = mutate((d) =>
+  const db = await mutate((d) =>
     deliverMessage(d, {
       id: uid('m'),
       offerId,

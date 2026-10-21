@@ -20,6 +20,7 @@ export function DeviceProvider({ children }: { children: ReactNode }) {
         : null;
     if (fromUrl) {
       setP(fromUrl);
+      AsyncStorage.setItem(KEY, fromUrl).catch(() => {});
       return;
     }
     AsyncStorage.getItem(KEY)

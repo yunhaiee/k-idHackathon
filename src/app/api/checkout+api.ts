@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     /** A parent paying for a child's approved request. */
     payingFor?: PersonaId;
   };
-  const db = readDB();
+  const db = await readDB();
   const product = PRODUCTS.find((p) => p.id === productId);
   if (!product) return Response.json({ error: 'unknown product' }, { status: 404 });
 

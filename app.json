@@ -22,7 +22,11 @@
     },
     "web": {
       "output": "server",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "name": "Kardza",
+      "shortName": "Kardza",
+      "themeColor": "#0A0A0F",
+      "backgroundColor": "#0A0A0F"
     },
     "plugins": [
       "expo-router",

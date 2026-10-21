@@ -26,7 +26,7 @@ export async function POST(request: Request) {
   // this session really passed; permissions are read by the SDK for that same verified session.
   const claim = data as { sessionId?: string; status?: string };
   const status = claim.status?.toLowerCase() as KidRecord['status'] | undefined;
-  mutate((db) => {
+  await mutate((db) => {
     const u = db.users[persona];
     const prev = u.kid[country] ?? { updatedAt: 0 };
     u.kid[country] = {

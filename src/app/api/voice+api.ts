@@ -1,11 +1,12 @@
 /// <reference types="node" />
 // Voice note → Modulate. Fast path (≈2s): transcript with PII tags, emotion, deepfake score → decide now.
 // Slow path (≈18s): Velma Triage behaviors, added to the message and the parent alert when it lands.
+import { runTask } from 'expo-server';
 import fs from 'node:fs';
 import path from 'node:path';
 
 import type { Message, PersonaId, Risk } from '@/lib/types';
-import { mutate, uid } from '@/server/db';
+import { mutate, saveAudio, uid } from '@/server/db';
 import { transcribe, triage } from '@/server/modulate';
 import { redact, ruleCheck, stripTags } from '@/server/safety';
 import { deliverMessage } from '@/server/trade';
@@ -39,8 +40,7 @@ export async function POST(request: Request) {
 
   const id = uid('m');
   const ext = path.extname(filename) || '.mp4';
-  fs.mkdirSync(path.join(process.cwd(), 'data', 'audio'), { recursive: true });
-  fs.writeFileSync(path.join(process.cwd(), 'data', 'audio', `${id}${ext}`), audio);
+  await saveAudio(`${id}${ext}`, audio);
 
   let tagged: string;
   let deepfake: number | undefined;
@@ -79,14 +79,14 @@ export async function POST(request: Request) {
     checkedBy,
     createdAt: Date.now(),
   };
-  const db = mutate((d) => deliverMessage(d, msg));
+  const db = await mutate((d) => deliverMessage(d, msg));
 
-  // Slow path: Velma behaviors. Not awaited; the clients pick it up on the next poll.
+  // Slow path: Velma behaviors. Not awaited (runTask keeps serverless alive); clients see it on the next poll.
   if (checkedBy.includes('Modulate')) {
-    void triage(audio, filename)
-      .then((v) => {
+    runTask(() => triage(audio, filename)
+      .then(async (v) => {
         const found = (v.behaviors ?? []).filter((b) => b.detected);
-        mutate((d) => {
+        await mutate((d) => {
           const m = d.messages.find((x) => x.id === id);
           if (!m) return;
           m.behaviors = found.map((b) => ({ name: b.behavior_name, confidence: b.confidence, reasoning: b.reasoning }));
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
           }
         });
       })
-      .catch((e) => console.warn('[voice] Velma failed:', String(e).slice(0, 200)));
+      .catch((e) => console.warn('[voice] Velma failed:', String(e).slice(0, 200))));
   }
   return Response.json(db);
 }
