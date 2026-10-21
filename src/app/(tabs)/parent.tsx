@@ -4,6 +4,7 @@ import { View } from 'react-native';
 
 import { CheckoutSheet } from '@/components/CheckoutSheet';
 import { CredibilityCard } from '@/components/Credibility';
+import { KidRulesCard } from '@/components/KidRulesCard';
 import { OfferThread } from '@/components/trade/OfferThread';
 import { Btn, Eyebrow, H, Note, Page, Rule, Txt } from '@/components/ui';
 import { act, useDB } from '@/lib/api';
@@ -69,12 +70,16 @@ export default function FamilyOrMe() {
 
       {kids.length ? (
         <>
-          <Rule />
-          <Eyebrow color={C.warning}>Safety alerts</Eyebrow>
-          <Txt size={13} color={C.muted}>
-            {COPY.parent.neverChat}
-          </Txt>
-          {alerts.length === 0 ? <Txt color={C.muted}>No alerts.</Txt> : null}
+          {/* Alerts and approvals appear above the k-ID card only when there's something to act on. */}
+          {alerts.length ? (
+            <>
+              <Rule />
+              <Eyebrow color={C.warning}>Safety alerts</Eyebrow>
+              <Txt size={13} color={C.muted}>
+                {COPY.parent.neverChat}
+              </Txt>
+            </>
+          ) : null}
           {alerts.map((a) => {
             const msg = a.messageId ? db.messages.find((m) => m.id === a.messageId) : undefined;
             const sender = msg ? db.users[msg.fromId] : undefined;
@@ -125,10 +130,13 @@ export default function FamilyOrMe() {
             );
           })}
 
-          <Rule />
-          <Eyebrow color={C.accent}>Needs your OK</Eyebrow>
+          {requests.length || openReviews.length || checkout.pending || checkout.error ? (
+            <>
+              <Rule />
+              <Eyebrow color={C.accent}>Needs your OK</Eyebrow>
+            </>
+          ) : null}
           <CheckoutSheet checkout={checkout} />
-          {requests.length === 0 && openReviews.length === 0 ? <Txt color={C.muted}>Nothing waiting.</Txt> : null}
 
           {openReviews.map((o) => {
             const sender = db.users[o.fromId];
@@ -195,6 +203,10 @@ export default function FamilyOrMe() {
               </View>
             );
           })}
+          <Rule />
+          {kids.map((k) => (
+            <KidRulesCard key={k.id} kid={k} />
+          ))}
         </>
       ) : null}
 

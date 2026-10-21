@@ -109,6 +109,15 @@ export const COPY = {
     held: "An offer is waiting for your parent's OK.",
   },
 
+  kidRules: {
+    title: (child: string) => `What k-ID decided for ${child}`,
+    who: (child: string, age: number, where: string, consentAge?: number) =>
+      `${child} · ${age} · ${where}${consentAge ? ` · consent age ${consentAge}` : ''}`,
+    access: (a: 'on' | 'optin' | 'parent' | 'off', child: string) =>
+      a === 'parent' ? 'Needs you' : a === 'on' ? 'Allowed' : a === 'optin' ? `${child} can turn on` : 'Not available',
+    credibility: (child: string, tier: string) => `${child}'s credibility · ${tier}`,
+  },
+
   why: {
     chip: 'Why am I seeing this?',
     source: 'Rules from k-ID',
