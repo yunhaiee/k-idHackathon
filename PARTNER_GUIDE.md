@@ -143,7 +143,7 @@ Other server endpoints (integrations team): `/api/message` (text + safety), `/ap
   - **Velma Triage (about 18s, background):** judges the whole conversation, e.g. "Child Safety Violation 95%", and adds it to Mom's alert.
 - **Claude (Anthropic):** card recognition from a photo, message safety second opinion. Gemini is wired as a fallback but Google's model is overloaded today.
 - **Pokémon TCG API:** real TCGplayer market prices for scanned cards (best effort, labeled; falls back to "AI estimate").
-- **FastSpring:** checkout for shop items. Their API is blocked on their side right now, so checkout shows a labeled **"Simulated FastSpring checkout"** (test card 4242 4242 4242 4242) until they unblock it.
+- **FastSpring (real, test store `yunhakardza.test.onfastspring.com`):** after the server checks k-ID's purchase rules, it creates a real FastSpring checkout session and opens it in a new tab. The buyer pays with test card 4242 4242 4242 4242, then taps "I finished checkout", and our server **verifies the completed order with FastSpring** before marking it owned. A parent paying for a child is the buyer of record. (If FastSpring is unreachable it falls back to a labeled "Simulated FastSpring checkout".)
 
 ## 9. Personas and real k-ID facts
 
@@ -189,7 +189,7 @@ Optional beat: Jordan sends the voice note on **Mom's Charizard** instead, and M
 | k-ID gate stuck or errored | Tap "Start over", or "···" → Reset demo, or the labeled "Use simulated rules" link (local only) |
 | Persona didn't switch | Use the chips in the top bar, or open `?as=jordan` |
 | Scan says "Simulated" | AI provider down; the sample still works and is labeled |
-| Checkout says "Simulated FastSpring" | Expected until FastSpring unblocks their API |
+| Checkout says "Simulated FastSpring" | FastSpring unreachable; tell the integrations team |
 | Need new data / server behaviour | Ask the integrations team; don't edit `src/app/api/*` or `src/server/*` |
 
 ## 13. Q&A answers for the judges

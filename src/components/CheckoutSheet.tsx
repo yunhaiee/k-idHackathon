@@ -28,6 +28,7 @@ export function CheckoutSheet({ checkout }: { checkout: ReturnType<typeof useChe
         <Btn label={p.via === 'simulated' ? 'Pay (test)' : 'I finished checkout'} onPress={checkout.confirm} style={{ flex: 1 }} />
         <Btn label="Cancel" kind="quiet" onPress={checkout.cancel} style={{ flex: 1 }} />
       </View>
+      {checkout.error ? <Note tone="warn" title={checkout.error} /> : null}
     </View>
   );
 }

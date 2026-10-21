@@ -28,7 +28,14 @@ type Action =
   | { action: 'parentDecision'; requestId: string; approve: boolean }
   | { action: 'readAlert'; alertId: string }
   | { action: 'requestPurchase'; persona: PersonaId; productId: string }
-  | { action: 'recordPurchase'; persona: PersonaId; productId: string; via: 'fastspring' | 'simulated'; requestId?: string };
+  | {
+      action: 'recordPurchase';
+      persona: PersonaId;
+      productId: string;
+      via: 'fastspring' | 'simulated';
+      requestId?: string;
+      orderId?: string;
+    };
 
 export async function POST(request: Request): Promise<Response> {
   const body = (await request.json()) as Action;
@@ -107,7 +114,14 @@ async function handle(body: Action): Promise<Response> {
     case 'recordPurchase':
       return Response.json(
         await mutate((db) => {
-          db.purchases.unshift({ id: uid('p'), userId: body.persona, productId: body.productId, via: body.via, createdAt: Date.now() });
+          db.purchases.unshift({
+            id: uid('p'),
+            userId: body.persona,
+            productId: body.productId,
+            via: body.via,
+            orderId: body.orderId,
+            createdAt: Date.now(),
+          });
           const r = body.requestId ? db.requests.find((x) => x.id === body.requestId) : undefined;
           if (r) r.status = 'paid';
         }),

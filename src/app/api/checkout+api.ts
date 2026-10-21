@@ -1,28 +1,10 @@
-// Age-gated checkout. The k-ID-derived policy is checked HERE, on the server, before any FastSpring link
-// is handed out. Order: FastSpring Sessions API → FastSpring test product page → labeled simulated checkout.
+// Age-gated checkout. The k-ID-derived policy is checked HERE, on the server, before any FastSpring session
+// is created. The parent is the buyer of record when paying for a child.
 import { getPolicy } from '@/lib/policy';
 import { PRODUCTS } from '@/lib/seed';
 import type { PersonaId } from '@/lib/types';
 import { readDB } from '@/server/db';
-
-async function fastspringSession(productId: string): Promise<string | null> {
-  const user = process.env.FASTSPRING_API_USERNAME;
-  const pass = process.env.FASTSPRING_API_PASSWORD;
-  const store = process.env.FASTSPRING_STORE?.split(/\s/)[0];
-  if (!user || !pass || !store) return null;
-  const auth = Buffer.from(`${user}:${pass}`).toString('base64');
-  const res = await fetch('https://api.fastspring.com/sessions', {
-    method: 'POST',
-    headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/json', 'User-Agent': 'Kardza/1.0' },
-    body: JSON.stringify({ items: [{ product: productId, quantity: 1 }] }),
-  });
-  if (!res.ok) {
-    console.warn('[checkout] FastSpring sessions', res.status);
-    return null;
-  }
-  const data = (await res.json()) as { id?: string };
-  return data.id ? `https://${store}/session/${data.id}` : null;
-}
+import { createSession } from '@/server/fastspring';
 
 export async function POST(request: Request) {
   const { persona, productId, payingFor } = (await request.json()) as {
@@ -46,9 +28,11 @@ export async function POST(request: Request) {
   if (!allowed)
     return Response.json({ error: 'k-ID rules: this purchase needs a parent', needsParent: true }, { status: 403 });
 
-  const session = await fastspringSession(productId).catch(() => null);
-  if (session) return Response.json({ url: session, via: 'fastspring' });
-  const base = process.env.FASTSPRING_TEST_PRODUCT_BASE;
-  if (base) return Response.json({ url: `${base.replace(/\/?$/, '/')}${productId}`, via: 'fastspring' });
-  return Response.json({ url: null, via: 'simulated' });
+  try {
+    const session = await createSession(persona, productId);
+    return Response.json({ ...session, via: 'fastspring', since: Date.now() });
+  } catch (e) {
+    console.warn('[checkout] FastSpring unavailable, simulated:', String(e).slice(0, 200));
+    return Response.json({ url: null, via: 'simulated' });
+  }
 }

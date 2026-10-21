@@ -116,6 +116,8 @@ export type Purchase = {
   userId: PersonaId;
   productId: string;
   via: 'fastspring' | 'simulated';
+  /** FastSpring order id, when the server verified the order with FastSpring. */
+  orderId?: string;
   createdAt: number;
 };
 
