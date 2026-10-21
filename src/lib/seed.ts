@@ -21,8 +21,8 @@ export const DEMO = {
   phones: [[P('maya')], [P('leo')], [P('devon'), P('anna')]],
 };
 
-/** Listed cards whose price came from the AI price check ("Priced by AI"). */
-export const AI_PRICED_CARD_IDS = ['c-charizard-maya', 'c-charizard-leo'];
+/** Price source for cards priced by Kardza's AI price check (shown as "Priced by AI"). */
+export const AI_PRICE_SOURCE = 'AI estimate';
 
 export const PRODUCTS: Product[] = [
   { id: 'holo-binder-theme', name: 'Holo Binder Theme', priceUsd: 4.99, blurb: 'A shiny holo look for your binder. Digital item.' },
@@ -43,9 +43,9 @@ export function seedDB(): DB {
     version: 1,
     users: users as unknown as DB['users'],
     cards: [
-      { id: 'c-charizard-maya', name: 'Charizard', set: 'Base Set', number: '4/102', priceUsd: 70, image: img('base1', 4), ownerId: P('maya') },
+      { id: 'c-charizard-maya', name: 'Charizard', set: 'Base Set', number: '4/102', priceUsd: 70, priceSource: AI_PRICE_SOURCE, image: img('base1', 4), ownerId: P('maya') },
       { id: 'c-snorlax', name: 'Snorlax', set: 'Jungle', number: '11/64', priceUsd: 28, image: img('base2', 11), ownerId: P('maya') },
-      { id: 'c-charizard-leo', name: 'Charizard', set: 'Evolutions', number: '11/108', priceUsd: 70, image: img('xy12', 11), ownerId: P('leo') },
+      { id: 'c-charizard-leo', name: 'Charizard', set: 'Evolutions', number: '11/108', priceUsd: 70, priceSource: AI_PRICE_SOURCE, image: img('xy12', 11), ownerId: P('leo') },
       { id: 'c-pikachu', name: 'Pikachu', set: 'Base Set', number: '58/102', priceUsd: 12, image: img('base1', 58), ownerId: P('leo') },
       { id: 'c-gengar', name: 'Gengar', set: 'Fossil', number: '5/62', priceUsd: 48, image: img('base3', 5), ownerId: P('devon') },
       { id: 'c-eevee', name: 'Eevee', set: 'Jungle', number: '51/64', priceUsd: 6, image: img('base2', 51), ownerId: P('devon') },

@@ -96,10 +96,9 @@ export const COPY = {
     title: 'Kardza demo',
     reset: 'Reset demo',
     resetting: 'Resetting…',
-    sendBoth: (sender: string, cash: number, card: string) => `${sender} → both ${card}s: ${usd(cash)} + voice note`,
-    sampleVoice: 'Use sample voice note',
-    sending: 'Sending to both…',
-    sent: 'Sent. Modulate checked the voice note.',
-    show: (name: string) => `Show ${name}`,
+    /** ··· menu fallback: sends the scripted offer + sample voice note if live recording fails on stage. */
+    shortcut: 'Demo shortcut',
+    sending: 'Sending…',
+    hint: 'Every phone is live. ··· in any phone: Reset demo, country, Demo shortcut.',
   },
 };

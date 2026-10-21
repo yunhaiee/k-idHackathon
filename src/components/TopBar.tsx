@@ -7,6 +7,8 @@ import { act, useDB } from '@/lib/api';
 import { useDevice } from '@/lib/device';
 import { ACCESS_LABEL, COUNTRY_NAME, getPolicy, KID_PERMISSIONS, PERM_LABEL } from '@/lib/policy';
 import { C } from '@/lib/theme';
+import { COPY } from '@/lib/copy';
+import { runDemoShortcut } from '@/lib/demoShortcut';
 import { PERSONA_ORDER } from '@/lib/seed';
 import type { Country } from '@/lib/types';
 
@@ -20,6 +22,7 @@ export function TopBar() {
   const { persona, setPersona } = useDevice();
   const [open, setOpen] = useState(false);
   const [demo, setDemo] = useState(false);
+  const [shortcut, setShortcut] = useState<string | null>(null);
   if (!db) return <View style={{ height: insets.top + 60, backgroundColor: C.bg }} />;
   const user = db.users[persona];
   if (!user) return <View style={{ height: insets.top + 60, backgroundColor: C.bg }} />;
@@ -65,7 +68,19 @@ export function TopBar() {
               onPress={() => act({ action: 'setCountry', persona, country: c })}
             />
           ))}
-          <Chip label="Reset demo" onPress={() => act({ action: 'reset' })} color={C.danger} />
+          <Chip label={COPY.demo.reset} onPress={() => act({ action: 'reset' })} color={C.danger} />
+          <Chip
+            label={shortcut ?? COPY.demo.shortcut}
+            onPress={async () => {
+              if (shortcut) return;
+              setShortcut(COPY.demo.sending);
+              try {
+                await runDemoShortcut(db);
+              } finally {
+                setShortcut(null);
+              }
+            }}
+          />
         </View>
       ) : null}
 

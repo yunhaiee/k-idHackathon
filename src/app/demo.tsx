@@ -3,7 +3,6 @@
 import { createElement, useState } from 'react';
 import { Platform, useWindowDimensions, View } from 'react-native';
 
-import { DemoControls } from '@/components/DemoControls';
 import { Chip, Eyebrow, H, Page, Txt } from '@/components/ui';
 import { useDB } from '@/lib/api';
 import { COPY } from '@/lib/copy';
@@ -32,7 +31,7 @@ function label(db: DB, id: PersonaId) {
   return `${u.name} · ${getPolicy(u).age} ${FLAG[u.country] ?? u.country}`;
 }
 
-function Phone({ id, scale, hidden, nonce }: { id: PersonaId; scale: number; hidden?: boolean; nonce: number }) {
+function Phone({ id, scale, hidden }: { id: PersonaId; scale: number; hidden?: boolean }) {
   return (
     <View
       style={{
@@ -46,7 +45,6 @@ function Phone({ id, scale, hidden, nonce }: { id: PersonaId; scale: number; hid
         display: hidden ? 'none' : 'flex',
       }}>
       {createElement('iframe', {
-        key: `${id}-${nonce}`,
         src: `/?as=${id}`,
         title: id,
         allow: 'microphone; autoplay',
@@ -71,8 +69,6 @@ export default function Demo() {
   const db = useDB();
   const win = useWindowDimensions();
   const [pick, setPick] = useState<Record<number, number>>({});
-  // Bumped on reset so every phone reloads fresh (no half-open sheets left over).
-  const [nonce, setNonce] = useState(0);
 
   if (Platform.OS !== 'web')
     return (
@@ -92,7 +88,9 @@ export default function Demo() {
           <Eyebrow color={C.accent}>Rules from k-ID · live</Eyebrow>
           <H size={24}>{COPY.demo.title}</H>
         </View>
-        <DemoControls db={db} onReset={() => setNonce((n) => n + 1)} />
+        <Txt size={13} color={C.muted}>
+          {COPY.demo.hint}
+        </Txt>
       </View>
 
       <View style={{ flexDirection: 'row', justifyContent: 'center', gap: GAP }}>
@@ -111,7 +109,7 @@ export default function Demo() {
               </View>
               {/* Both phones in a pair stay mounted so the toggle never loses their state. */}
               {group.map((id, j) => (
-                <Phone key={id} id={id} scale={scale} hidden={j !== shown} nonce={nonce} />
+                <Phone key={id} id={id} scale={scale} hidden={j !== shown} />
               ))}
             </View>
           );
