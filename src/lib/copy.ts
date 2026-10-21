@@ -53,6 +53,9 @@ export const COPY = {
     notSaved: 'the server did not return the new offer',
     stepSave: "Couldn't save the offer",
     stepVoice: "Couldn't send the voice note",
+    stepMessage: "Couldn't send the message",
+    checkingMessage: 'Checking message…',
+    messagePlaceholder: 'Add a message (optional)',
     stepDeliver: "Couldn't refresh the inbox",
     newOffer: (sender: string, card: string) => `New offer from ${sender} on your ${card}`,
   },
@@ -144,8 +147,16 @@ export const COPY = {
     alertTitle: (child: string) => `About ${child}`,
     /** Built from the message's risk reasons; the parent never sees the audio or the chat. */
     /** `reason` is analyzeOffer's reasonForParent when the server has it, else built from the risk reasons. */
-    voiceAlert: (sender: string, band: Band, child: string, reasons: string[], pronoun: string, reason?: string) =>
-      `${sender} (${BAND_WORD[band]}) sent ${child} a voice note ${reason ?? alertAsk(reasons, pronoun)}. We blocked it.`,
+    voiceAlert: (
+      sender: string,
+      band: Band,
+      child: string,
+      reasons: string[],
+      pronoun: string,
+      reason?: string,
+      kind: 'text' | 'voice' = 'voice',
+    ) =>
+      `${sender} (${BAND_WORD[band]}) sent ${child} a ${kind === 'voice' ? 'voice note' : 'message'} ${reason ?? alertAsk(reasons, pronoun)}. We blocked it.`,
     letSee: (child: string) => `Let ${child} see it`,
     released: (child: string) => `${child} can see it now, with a scam warning. You approve any trade.`,
     blocked: (sender: string, child: string) => `${sender} can't contact ${child} again.`,

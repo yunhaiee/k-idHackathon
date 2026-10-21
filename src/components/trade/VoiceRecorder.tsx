@@ -1,36 +1,26 @@
 // Hold-to-record voice note for offers (browser mic via MediaRecorder), with a live timer + waveform and a
-// playback preview before sending. "Use sample voice note" attaches the bundled file instead.
-import { useAudioPlayer } from 'expo-audio';
+// playback preview before sending.
 import { useEffect, useRef, useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 
-import { Btn, Note, Txt } from '@/components/ui';
+import { Note, Txt } from '@/components/ui';
 import { apiUrl } from '@/lib/api';
 import { COPY } from '@/lib/copy';
 import { C } from '@/lib/theme';
 import type { PersonaId } from '@/lib/types';
 
-export type VoiceNote = { kind: 'recording'; blob: Blob; url: string; seconds: number } | { kind: 'sample' };
+export type VoiceNote = { kind: 'recording'; blob: Blob; url: string; seconds: number };
 
 const MAX_SECONDS = 15;
 const BARS = 40;
 
 /** Upload a voice note for one offer; the server runs Modulate on it. Throws with the server's reason on failure. */
 export async function sendVoiceNote(offerId: string, fromId: PersonaId, voice: VoiceNote) {
-  let res: Response;
-  if (voice.kind === 'sample') {
-    res = await fetch(apiUrl('/api/voice'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ offerId, fromId }),
-    });
-  } else {
-    const fd = new FormData();
-    fd.append('offerId', offerId);
-    fd.append('fromId', fromId);
-    fd.append('file', voice.blob, voice.blob.type.includes('mp4') ? 'voice.mp4' : 'voice.webm');
-    res = await fetch(apiUrl('/api/voice'), { method: 'POST', body: fd });
-  }
+  const fd = new FormData();
+  fd.append('offerId', offerId);
+  fd.append('fromId', fromId);
+  fd.append('file', voice.blob, voice.blob.type.includes('mp4') ? 'voice.mp4' : 'voice.webm');
+  const res = await fetch(apiUrl('/api/voice'), { method: 'POST', body: fd });
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     let reason = body.replace(/<[^>]+>/g, ' ').trim().slice(0, 140);
@@ -56,21 +46,6 @@ function Waveform({ levels, color }: { levels: number[]; color: string }) {
         <View key={i} style={{ width: 3, borderRadius: 2, height: Math.max(3, l * 32), backgroundColor: color }} />
       ))}
     </View>
-  );
-}
-
-function SamplePreview() {
-  const player = useAudioPlayer(require('../../../assets/samples/voice-note.mp4'));
-  return (
-    <Pressable
-      onPress={() => {
-        player.seekTo(0);
-        player.play();
-      }}>
-      <Txt weight="semi" color={C.accent}>
-        {COPY.voice.play}
-      </Txt>
-    </Pressable>
   );
 }
 
@@ -170,12 +145,12 @@ export function VoiceRecorder({ value, onChange }: { value: VoiceNote | null; on
   const clear = () => {
     audio.current?.pause();
     setPlaying(false);
-    if (value?.kind === 'recording') URL.revokeObjectURL(value.url);
+    if (value) URL.revokeObjectURL(value.url);
     onChange(null);
   };
 
   const togglePreview = () => {
-    if (value?.kind !== 'recording') return;
+    if (!value) return;
     if (playing) {
       audio.current?.pause();
       setPlaying(false);
@@ -190,17 +165,13 @@ export function VoiceRecorder({ value, onChange }: { value: VoiceNote | null; on
   if (value)
     return (
       <View style={{ gap: 8, borderLeftWidth: 2, borderLeftColor: C.accent, paddingLeft: 12 }}>
-        <Txt weight="semi">{value.kind === 'sample' ? COPY.voice.sampleAttached : COPY.voice.recorded(fmt(value.seconds))}</Txt>
+        <Txt weight="semi">{COPY.voice.recorded(fmt(value.seconds))}</Txt>
         <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
-          {value.kind === 'sample' ? (
-            <SamplePreview />
-          ) : (
-            <Pressable onPress={togglePreview}>
-              <Txt weight="semi" color={C.accent}>
-                {playing ? COPY.voice.pause : COPY.voice.play}
-              </Txt>
-            </Pressable>
-          )}
+          <Pressable onPress={togglePreview}>
+            <Txt weight="semi" color={C.accent}>
+              {playing ? COPY.voice.pause : COPY.voice.play}
+            </Txt>
+          </Pressable>
           <Pressable onPress={clear}>
             <Txt color={C.muted}>{COPY.voice.remove}</Txt>
           </Pressable>
@@ -249,7 +220,6 @@ export function VoiceRecorder({ value, onChange }: { value: VoiceNote | null; on
       ) : state === 'denied' ? (
         <Note tone="warn" title={COPY.voice.denied} />
       ) : null}
-      <Btn label={COPY.voice.sample} kind="quiet" onPress={() => onChange({ kind: 'sample' })} />
     </View>
   );
 }

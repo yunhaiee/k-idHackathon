@@ -84,7 +84,7 @@ export default function FamilyOrMe() {
             const msg = a.messageId ? db.messages.find((m) => m.id === a.messageId) : undefined;
             const sender = msg ? db.users[msg.fromId] : undefined;
             const reason =
-              msg?.kind === 'voice' && sender
+              msg && sender
                 ? COPY.parent.voiceAlert(
                     sender.name,
                     getPolicy(sender).band,
@@ -92,6 +92,7 @@ export default function FamilyOrMe() {
                     msg.risk?.reasons ?? [],
                     pronounOf(db.users[a.childId]),
                     offerOf(msg.offerId)?.analysis?.reasonForParent,
+                    msg.kind,
                   )
                 : a.reason;
             const child = db.users[a.childId];

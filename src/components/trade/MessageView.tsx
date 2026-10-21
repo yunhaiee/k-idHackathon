@@ -19,6 +19,10 @@ export function checkedLabel(msg: Message) {
   return `${COPY.intel.name} · ${COPY.intel.checkedBy(who.length ? who : ['rules'])}${sim}`;
 }
 
+/** Chat text has no server-side redaction: hide phone numbers and emails before a teen sees it. */
+const hideContact = (t: string) =>
+  t.replace(/(\+?\d[\d\s().-]{6,}\d)/g, '[phone hidden]').replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, '[email hidden]');
+
 function Play({ url }: { url: string }) {
   const player = useAudioPlayer(apiUrl(url));
   return (
@@ -91,17 +95,19 @@ export function MessageView({
   const showFull = policy.voice === 'transcript+warning' || policy.band === 'adult';
   const text = msg.kind === 'voice' ? (showFull ? msg.transcript : msg.redacted) : body;
 
-  // Teen: the risky voice note is delivered with personal details hidden, under a scam banner. It plays
-  // once the teen has voice notes on in k-ID (player-managed); until then they read the redacted transcript.
+  // Teen: a risky voice note or chat message is delivered with personal details hidden, under a scam banner.
+  // A voice note plays once the teen has voice notes on in k-ID (player-managed); until then they read the
+  // redacted transcript.
+  const isVoice = msg.kind === 'voice';
   const canPlay = policy.voice === 'redact' || !!released;
-  if ((policy.voice === 'redact' || policy.voice === 'none' || released) && risky && msg.kind === 'voice')
+  if ((policy.voice === 'redact' || policy.voice === 'none' || released) && risky)
     return (
       <View style={{ gap: 6 }}>
         <Eyebrow>{label}</Eyebrow>
         <Note tone="danger" title={COPY.voice.scamBanner} />
         {msg.audioUrl && canPlay ? <Play url={msg.audioUrl} /> : null}
-        {text ? <Txt color={C.muted}>{text}</Txt> : null}
-        {!canPlay ? (
+        {text ? <Txt color={C.muted}>{isVoice ? text : hideContact(text)}</Txt> : null}
+        {isVoice && !canPlay ? (
           <View style={{ gap: 6 }}>
             <Txt size={12} color={C.muted}>
               {COPY.voice.offHint}

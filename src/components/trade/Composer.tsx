@@ -42,16 +42,6 @@ export function Composer({ offerId, me, policy }: { offerId: string; me: Persona
     }
   };
 
-  const sample = async () => {
-    setBusy('Modulate is listening…');
-    try {
-      await postJSON('/api/voice', { offerId, fromId: me });
-      await refreshDB();
-    } finally {
-      setBusy(null);
-    }
-  };
-
   const toggleRecord = async () => {
     if (rec.isRecording) {
       await recorder.stop();
@@ -126,7 +116,6 @@ export function Composer({ offerId, me, policy }: { offerId: string; me: Persona
             onPress={toggleRecord}
             style={{ flex: 1 }}
           />
-          <Btn label="Use sample voice note" kind="quiet" onPress={sample} style={{ flex: 1 }} />
         </View>
       ) : !chatOff ? (
         <Txt size={12} color={C.muted}>

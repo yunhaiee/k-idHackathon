@@ -9,7 +9,7 @@ import { TopBar } from '@/components/TopBar';
 import { FairMeter } from '@/components/trade/FairMeter';
 import { sendVoiceNote, VoiceRecorder, type VoiceNote } from '@/components/trade/VoiceRecorder';
 import { Btn, Eyebrow, H, Note, Page, Rule, Txt } from '@/components/ui';
-import { act, refreshDB, useDB } from '@/lib/api';
+import { act, apiUrl, refreshDB, useDB } from '@/lib/api';
 import { COPY } from '@/lib/copy';
 import { credibilityOf } from '@/lib/demo';
 import { useDevice } from '@/lib/device';
@@ -27,6 +27,7 @@ export default function ListingScreen() {
   const [cash, setCash] = useState('');
   const [picked, setPicked] = useState<string[]>([]);
   const [voice, setVoice] = useState<VoiceNote | null>(null);
+  const [note, setNote] = useState('');
   const [alsoSimilar, setAlsoSimilar] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -56,6 +57,16 @@ export default function ListingScreen() {
     (l) => l.id !== listing.id && l.sellerId !== persona && db.cards.find((c) => c.id === l.cardId)?.name === card.name,
   );
 
+  /** A typed message on one offer: same route and safety check as any chat in the thread. */
+  const sendChat = async (offerId: string, fromId: string, text: string) => {
+    const res = await fetch(apiUrl('/api/message'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ offerId, fromId, text }),
+    });
+    if (!res.ok) throw new Error(((await res.json().catch(() => ({}))) as { error?: string }).error ?? `${res.status}`);
+  };
+
   const send = async () => {
     if (sending.current) return; // no double-send from a quick second tap
     setError(null);
@@ -79,6 +90,14 @@ export default function ListingScreen() {
         const offer = res.offers?.find((o) => o.listingId === l.id && o.fromId === persona);
         if (!offer) throw new Error(COPY.offer.notSaved);
         offerIds.push(offer.id);
+      }
+      // The message goes through the same safety check as any chat, once per offer, so k-ID policy decides
+      // what each receiver sees (warning, hidden + parent alert).
+      const text = note.trim();
+      if (text) {
+        step = COPY.offer.stepMessage;
+        setBusy(COPY.offer.checkingMessage);
+        await Promise.all(offerIds.map((offerId) => sendChat(offerId, persona, text)));
       }
       if (voice) {
         step = COPY.offer.stepVoice;
@@ -193,28 +212,65 @@ export default function ListingScreen() {
 
             {give ? <FairMeter give={give} want={card.priceUsd} role="sender" policy={policy} /> : null}
 
+            {policy.access['text-chat-private'] === 'on' ? (
+              <TextInput
+                value={note}
+                onChangeText={setNote}
+                placeholder={COPY.offer.messagePlaceholder}
+                placeholderTextColor={C.muted}
+                multiline
+                maxLength={500}
+                style={{
+                  minHeight: 76,
+                  color: C.text,
+                  fontFamily: F.body,
+                  fontSize: 15,
+                  backgroundColor: C.surface,
+                  borderWidth: 1,
+                  borderColor: C.line,
+                  borderRadius: 14,
+                  padding: 12,
+                  textAlignVertical: 'top',
+                }}
+              />
+            ) : null}
             {policy.access['voice-chat'] === 'on' ? <VoiceRecorder value={voice} onChange={setVoice} /> : null}
 
             {similar.length ? (
-              <Pressable onPress={() => setAlsoSimilar((v) => !v)} style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+              // The whole row is the tap target, with a clear box so it reads as an option at a glance.
+              <Pressable
+                onPress={() => setAlsoSimilar((v) => !v)}
+                style={{
+                  flexDirection: 'row',
+                  gap: 12,
+                  alignItems: 'center',
+                  paddingHorizontal: 14,
+                  paddingVertical: 12,
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor: alsoSimilar ? C.accent : C.line,
+                  backgroundColor: alsoSimilar ? 'rgba(157,123,240,0.12)' : C.surface,
+                }}>
                 <View
                   style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: 5,
-                    borderWidth: 1,
-                    borderColor: alsoSimilar ? C.accent : C.line,
+                    width: 24,
+                    height: 24,
+                    borderRadius: 7,
+                    borderWidth: 2,
+                    borderColor: alsoSimilar ? C.accent : C.muted,
                     backgroundColor: alsoSimilar ? C.accent : 'transparent',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}>
                   {alsoSimilar ? (
-                    <Txt size={13} weight="semi" color="#fff">
+                    <Txt size={15} weight="semi" color="#fff">
                       ✓
                     </Txt>
                   ) : null}
                 </View>
-                <Txt>{COPY.offer.alsoSimilar(similar.length, card.name)}</Txt>
+                <Txt weight="med" style={{ flex: 1 }}>
+                  {COPY.offer.alsoSimilar(similar.length, card.name)}
+                </Txt>
               </Pressable>
             ) : null}
 
