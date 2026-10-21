@@ -5,6 +5,7 @@ import { Platform, useWindowDimensions, View } from 'react-native';
 
 import { Chip, Eyebrow, H, Page, Txt } from '@/components/ui';
 import { useDB } from '@/lib/api';
+import { FRAME } from '@/lib/device';
 import { COPY } from '@/lib/copy';
 import { FLAG } from '@/lib/demo';
 import { getPolicy } from '@/lib/policy';
@@ -46,6 +47,7 @@ function Phone({ id, scale, hidden }: { id: PersonaId; scale: number; hidden?: b
       }}>
       {createElement('iframe', {
         src: `/?persona=${id}`,
+        name: `${FRAME}${id}`,
         title: id,
         allow: 'microphone; autoplay',
         // Absolute so the frame's flex layout can't shrink it before the scale is applied.
