@@ -7,6 +7,7 @@
       "runtimeArgs": [
         "expo",
         "start",
+        "--tunnel",
         "--port",
         "8082"
       ],
@@ -14,13 +15,11 @@
       "autoPort": false
     },
     {
-      "name": "kardza-tunnel",
+      "name": "kardza-lan",
       "runtimeExecutable": "npx",
       "runtimeArgs": [
         "expo",
         "start",
-        "--tunnel",
-        "ngrok",
         "--port",
         "8082"
       ],

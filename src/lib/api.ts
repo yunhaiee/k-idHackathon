@@ -10,7 +10,8 @@ export function apiOrigin(): string {
   if (override) return override.replace(/\/$/, '');
   if (Platform.OS === 'web' && typeof window !== 'undefined') return window.location.origin;
   const host = Constants.expoConfig?.hostUri ?? 'localhost:8081';
-  const secure = host.includes('exp.direct') || host.includes('ngrok');
+  // Tunnels (on.expo.app, exp.direct, ngrok) are https; LAN IPs and localhost are http.
+  const secure = !/^(localhost|127\.|10\.|192\.168\.|172\.)/.test(host);
   return `${secure ? 'https' : 'http'}://${host}`;
 }
 
