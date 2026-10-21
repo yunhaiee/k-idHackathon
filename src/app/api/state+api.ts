@@ -23,7 +23,9 @@ type Action =
   | { action: 'createOffer'; listingId: string; fromId: PersonaId; offeredCardIds: string[] }
   | { action: 'respondOffer'; offerId: string; by: PersonaId; accept: boolean }
   | { action: 'parentDecision'; requestId: string; approve: boolean }
-  | { action: 'readAlert'; alertId: string };
+  | { action: 'readAlert'; alertId: string }
+  | { action: 'requestPurchase'; persona: PersonaId; productId: string }
+  | { action: 'recordPurchase'; persona: PersonaId; productId: string; via: 'fastspring' | 'simulated'; requestId?: string };
 
 export async function POST(request: Request): Promise<Response> {
   const body = (await request.json()) as Action;
@@ -73,6 +75,30 @@ function handle(body: Action): Response {
         mutate((db) => {
           const a = db.alerts.find((x) => x.id === body.alertId);
           if (a) a.read = true;
+        }),
+      );
+    case 'requestPurchase':
+      return Response.json(
+        mutate((db) => {
+          const u = db.users[body.persona];
+          if (!u.parentId) throw new Error('no parent on file');
+          db.requests.unshift({
+            id: uid('r'),
+            kind: 'purchase',
+            childId: u.id,
+            parentId: u.parentId,
+            productId: body.productId,
+            status: 'pending',
+            createdAt: Date.now(),
+          });
+        }),
+      );
+    case 'recordPurchase':
+      return Response.json(
+        mutate((db) => {
+          db.purchases.unshift({ id: uid('p'), userId: body.persona, productId: body.productId, via: body.via, createdAt: Date.now() });
+          const r = body.requestId ? db.requests.find((x) => x.id === body.requestId) : undefined;
+          if (r) r.status = 'paid';
         }),
       );
     case 'kidForget':

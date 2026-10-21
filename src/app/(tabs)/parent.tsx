@@ -1,9 +1,11 @@
 import { router } from 'expo-router';
 import { View } from 'react-native';
 
+import { CheckoutSheet } from '@/components/CheckoutSheet';
 import { OfferThread } from '@/components/trade/OfferThread';
 import { Btn, Eyebrow, H, Note, Page, Rule, Txt } from '@/components/ui';
 import { act, useDB } from '@/lib/api';
+import { useCheckout } from '@/lib/checkout';
 import { useDevice } from '@/lib/device';
 import { getPolicy } from '@/lib/policy';
 import { PRODUCTS } from '@/lib/seed';
@@ -12,6 +14,7 @@ import { C } from '@/lib/theme';
 export default function FamilyOrMe() {
   const db = useDB();
   const { persona } = useDevice();
+  const checkout = useCheckout();
   if (!db) return null;
   const me = db.users[persona];
   const policy = getPolicy(me);
@@ -32,6 +35,7 @@ export default function FamilyOrMe() {
         <>
           <Rule />
           <Eyebrow color={C.accent}>Needs your OK</Eyebrow>
+          <CheckoutSheet checkout={checkout} />
           {requests.length === 0 ? <Txt color={C.muted}>Nothing waiting.</Txt> : null}
           {requests.map((r) => {
             const child = db.users[r.childId];
@@ -48,7 +52,11 @@ export default function FamilyOrMe() {
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   <Btn
                     label={r.kind === 'purchase' ? 'Approve and pay' : 'Approve'}
-                    onPress={() => act({ action: 'parentDecision', requestId: r.id, approve: true })}
+                    onPress={() =>
+                      r.kind === 'purchase' && r.productId
+                        ? checkout.start(persona, r.productId, { payingFor: r.childId, requestId: r.id })
+                        : act({ action: 'parentDecision', requestId: r.id, approve: true })
+                    }
                     style={{ flex: 1 }}
                   />
                   <Btn
