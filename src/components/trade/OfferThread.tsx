@@ -14,6 +14,7 @@ import type { DB, Offer, PersonaId } from '@/lib/types';
 import { Composer } from './Composer';
 import { FairMeter } from './FairMeter';
 import { checkedLabel, MessageView } from './MessageView';
+import { OfferActions } from './OfferActions';
 
 const value = (db: DB, ids: string[]) => ids.reduce((s, id) => s + (db.cards.find((c) => c.id === id)?.priceUsd ?? 0), 0);
 
@@ -99,23 +100,14 @@ export function OfferThread({ db, offer, me }: { db: DB; offer: Offer; me: Perso
 
       {offer.status === 'pending' && role !== 'parent' ? <Composer offerId={offer.id} me={me} policy={policy} /> : null}
 
-      {offer.status === 'pending' && role === 'receiver' ? (
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Btn
-            label={policy.tradeNeedsParent && db.users[me].parentId ? 'Accept · ask a parent' : COPY.deal.accept}
-            onPress={() => act({ action: 'respondOffer', offerId: offer.id, by: me, accept: true })}
-            style={{ flex: 1 }}
-            big={policy.bigUI}
-          />
-          <Btn
-            label="Decline"
-            kind="quiet"
-            onPress={() => act({ action: 'respondOffer', offerId: offer.id, by: me, accept: false })}
-            style={{ flex: 1 }}
-            big={policy.bigUI}
-          />
-        </View>
-      ) : null}
+      <OfferActions
+        offer={offer as DemoOffer}
+        me={me}
+        role={role}
+        policy={policy}
+        otherName={other.name}
+        needsParent={policy.tradeNeedsParent && !!db.users[me].parentId}
+      />
       {offer.status === 'needs-parent' ? (
         <Note title="Waiting for a parent">A grown-up checks this trade before any cards move.</Note>
       ) : null}

@@ -122,6 +122,7 @@ export const COPY = {
   deal: {
     counter: 'Counter',
     counterAt: (amount: number) => `Counter at ${usd(amount)}`,
+    waiting: (amount: number, who: string) => `You countered at ${usd(amount)}. Waiting for ${who}.`,
     accept: 'Accept',
     agreed: 'Deal agreed.',
     agreedBody: 'No payment or shipping for the card in this demo.',

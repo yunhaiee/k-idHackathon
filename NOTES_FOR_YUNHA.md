@@ -186,6 +186,13 @@ They're the Round 1 items **2, 3, 4** below, with one change from Oliver's new s
   Also reject `createOffer` / `/api/voice` / `/api/message` from a blocked sender (throw `'blocked'`), so Devon really can't reach Leo.
 - **Credibility −5** (Round 1 §4): ⛔ for the "62 → 57" beat. The UI animates any change to `users.devon.credibility` live (offer cards + Me tab).
 
+### R6. ⛔ Counteroffer → "Deal agreed." (`trade.ts`, `state+api.ts`); FastSpring; Reset
+
+- **⛔ `counterOffer`** is exactly Round 1 §5. The UI is built: Maya gets **Counter** → `$65` → `counterOffer { offerId, by, cashUsd }`, then Devon sees "Maya countered at $65" with **Accept**, which calls `respondOffer { by: devon, accept: true }` on a `countered` offer. Both then see "Deal agreed." Today the tap shows "This needs the server update".
+- **⛔ Maya's trading is guardian-managed in real k-ID** (see R7a). If the server ever checks `access['virtual-property-ownership'] === 'on'` for the receiver, Maya's counter and accept will be refused. Decide: (a) Maya asks for "Trading cards" in k-ID Settings before the demo and a guardian inbox approves once; or (b) receiving and countering only need the **sender's** trading permission (today's behaviour).
+- **FastSpring**: your test-product checkout from `main` is merged into `oliver-demo`. On my laptop it falls back to the labeled simulated checkout because my `.env` has no `FASTSPRING_STORE`; on yours it should open the real one. Leo → "Ask a parent" → Anna → **Approve and pay** → Leo owns it works end to end. Please make `holo-binder-theme` **$4.99** in the store.
+- **Reset** (··· → Reset demo) works today: offers, messages, alerts, purchases cleared; credibility back to 62.
+
 ## Round 1 audit: does each demo step work? (tested on my laptop, `localhost:8082`, real k-ID + live Modulate)
 
 | # | Step | Status | What's true today |
