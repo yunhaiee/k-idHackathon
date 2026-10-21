@@ -1,6 +1,7 @@
 // Card photo → Gemini: identify, estimate price, flag anything that looks off. Never claims "authentic".
 import type { ScanResult } from '@/lib/types';
 import { aiJSON } from '@/server/ai';
+import { marketPrice } from '@/server/prices';
 
 const SCHEMA = {
   type: 'object',
@@ -47,7 +48,14 @@ export async function POST(request: Request) {
       { text: PROMPT, imageBase64: data, mimeType: mime },
       SCHEMA,
     );
-    return Response.json({ ...result, model });
+    const market = await marketPrice(result.name, result.number, result.set);
+    return Response.json({
+      ...result,
+      model,
+      ...(market
+        ? { estimatedPriceUsd: market.usd, priceSource: `TCGplayer market · ${market.set ?? result.set}${market.updatedAt ? ` · updated ${market.updatedAt}` : ''}` }
+        : { priceSource: `AI estimate (${model})` }),
+    });
   } catch (e) {
     console.warn('[scan] falling back to simulated:', String(e).slice(0, 300));
     return Response.json(SIMULATED);

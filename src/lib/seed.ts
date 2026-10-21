@@ -19,7 +19,7 @@ export function seedDB(): DB {
       mom: { id: 'mom', name: 'Alex', age: 41, country: 'US', kid: {} },
     },
     cards: [
-      { id: 'c-mewtwo', name: 'Mewtwo', set: 'Base Set', number: '10/102', priceUsd: 55, image: img('base1', 10), ownerId: 'maya' },
+      { id: 'c-mewtwo', name: 'Mewtwo', set: 'Base Set', number: '10/102', priceUsd: 86, image: img('base1', 10), ownerId: 'maya' },
       { id: 'c-snorlax', name: 'Snorlax', set: 'Jungle', number: '11/64', priceUsd: 28, image: img('base2', 11), ownerId: 'maya' },
       { id: 'c-pikachu', name: 'Pikachu', set: 'Base Set', number: '58/102', priceUsd: 12, image: img('base1', 58), ownerId: 'jordan' },
       { id: 'c-eevee', name: 'Eevee', set: 'Jungle', number: '51/64', priceUsd: 6, image: img('base2', 51), ownerId: 'jordan' },

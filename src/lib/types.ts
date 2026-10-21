@@ -146,4 +146,6 @@ export type ScanResult = {
   reasons: string[];
   model?: string;
   simulated?: boolean;
+  /** Where estimatedPriceUsd came from. */
+  priceSource?: string;
 };

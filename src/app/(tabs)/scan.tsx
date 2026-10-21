@@ -107,6 +107,11 @@ export default function Scan() {
             {result.set} · {result.number}
           </Txt>
           <Price usd={result.estimatedPriceUsd} policy={policy} />
+          {result.priceSource && policy.band !== 'kid' ? (
+            <Txt size={12} color={C.muted}>
+              {result.priceSource}
+            </Txt>
+          ) : null}
           {result.fakeRisk === 'high' ? (
             <Note tone="danger" title="Needs a second look">
               {result.reasons.join(' ')}

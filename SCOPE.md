@@ -136,7 +136,7 @@ Presentation band, from k-ID's requirements: `age < digitalConsentAge` → **kid
 ## 6. Demo (2 min; lead with the change, per the judging guide)
 
 1. **Hook (10s):** the line above.
-2. **Same screen, three people (20s):** all 3 devices on the same Charizard listing. Maya: "About $55". Jordan: a fair range. Mom: exact price + market. Point at the banner: "k-ID decides this."
+2. **Same screen, three people (20s):** all 3 devices on the same Charizard listing. Maya: "About $85". Jordan: a fair range. Mom: exact price + market. Point at the banner: "k-ID decides this."
 3. **Live sign-up (25s):** the judge holds Maya's phone → birthday → k-ID: under 13 in the US → parent email → Mom approves on her phone → Maya's phone opens the app by itself.
 4. **Lowball + voice note (30s):** Jordan offers a lowball + sends the voice note. Maya: "This trade isn't fair" + "Message hidden for your safety. We told your parent." Mom: alert with the reason only (Modulate caught a phone number + pressure) and the trade waits for her. Jordan: "Fair offers build your reputation."
 5. **Buying + location (25s):** Maya taps Buy → "Ask a parent" → Mom pays with FastSpring. Jordan buys directly in the US → switch him to Germany → k-ID: "under 16 in Germany, a parent approves", widget in German.
