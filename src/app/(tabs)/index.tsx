@@ -37,6 +37,7 @@ export default function Market() {
       {db.listings.map((l) => {
         const card = db.cards.find((c) => c.id === l.cardId)!;
         const seller = db.users[l.sellerId];
+        const myOffer = db.offers.find((o) => o.listingId === l.id && o.fromId === persona && o.status !== 'declined');
         return (
           <Link key={l.id} href={`/listing/${l.id}`} asChild>
             <Pressable style={styles.row}>
@@ -53,6 +54,8 @@ export default function Market() {
                   <Eyebrow color={C.accent}>{COPY.market.aiPriced}</Eyebrow>
                 ) : null}
               </View>
+              {/* You already made an offer on this card: say so on the right. */}
+              {myOffer ? <Tag label={TAG[myOffer.status] ?? COPY.market.requested} color={myOffer.status === 'countered' ? C.warning : C.accent} /> : null}
             </Pressable>
           </Link>
         );
@@ -71,6 +74,18 @@ export default function Market() {
         </View>
       ))}
     </Page>
+  );
+}
+
+const TAG: Partial<Record<string, string>> = { countered: COPY.market.countered };
+
+function Tag({ label, color }: { label: string; color: string }) {
+  return (
+    <View style={{ borderWidth: 1, borderColor: color, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }}>
+      <Txt size={12} weight="semi" color={color}>
+        {label}
+      </Txt>
+    </View>
   );
 }
 

@@ -27,6 +27,8 @@ function alertAsk(reasons: string[], pronoun: string): string {
 export const COPY = {
   market: {
     aiPriced: 'Priced by AI',
+    requested: '✓ Requested',
+    countered: 'Countered',
     parentChecks: 'A grown-up checks every trade',
     parentChecksBody: 'Your parent sees each trade before it happens.',
     guardianOptIn: 'Trading needs a one-time OK in k-ID',
@@ -61,6 +63,7 @@ export const COPY = {
     alert: (child: string) => `Safety alert about ${child}`,
     tradeAsk: (child: string) => `${child} wants to accept a trade`,
     owned: (product: string) => `You got the ${product}`,
+    released: (sender: string) => `Your parent let ${sender}'s offer through. Be careful.`,
     enable: 'Phone notifications',
   },
 
