@@ -19,9 +19,9 @@ export function credibilityLabel(score: number) {
  * (e.g. "Shares a phone number", "Asks to keep a secret from a parent", "Asks to meet in person").
  * Finishes the sentence "Devon (adult) sent Leo a voice note …. We blocked it."
  */
-function alertAsk(reasons: string[]): string {
-  // TODO(human): pick the phrase for the riskiest reason(s); the script wants "asking them to text a phone number".
-  return reasons.some((r) => /phone|move off/i.test(r)) ? 'asking them to text a phone number' : 'that broke our safety rules';
+function alertAsk(reasons: string[], pronoun: string): string {
+  // TODO(human): pick the phrase for the riskiest reason(s); the script wants "asking him to text a phone number".
+  return reasons.some((r) => /phone|move off/i.test(r)) ? `asking ${pronoun} to text a phone number` : 'that broke our safety rules';
 }
 
 export const COPY = {
@@ -90,8 +90,13 @@ export const COPY = {
   parent: {
     alertTitle: (child: string) => `About ${child}`,
     /** Built from the message's risk reasons; the parent never sees the audio or the chat. */
-    voiceAlert: (sender: string, band: Band, child: string, reasons: string[]) =>
-      `${sender} (${BAND_WORD[band]}) sent ${child} a voice note ${alertAsk(reasons)}. We blocked it.`,
+    /** `reason` is analyzeOffer's reasonForParent when the server has it, else built from the risk reasons. */
+    voiceAlert: (sender: string, band: Band, child: string, reasons: string[], pronoun: string, reason?: string) =>
+      `${sender} (${BAND_WORD[band]}) sent ${child} a voice note ${reason ?? alertAsk(reasons, pronoun)}. We blocked it.`,
+    letSee: (child: string) => `Let ${child} see it`,
+    released: (child: string) => `${child} can see it now, with a scam warning. You approve any trade.`,
+    blocked: (sender: string, child: string) => `${sender} can't contact ${child} again.`,
+    needsServer: 'This needs the server update (NOTES_FOR_YUNHA.md).',
     block: (sender: string) => `Block ${sender}`,
     dismiss: 'Dismiss',
     offerReview: (sender: string, band: Band, child: string, offered: number, card: string, worth: number) =>

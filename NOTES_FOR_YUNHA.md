@@ -41,6 +41,138 @@ The UI reads `checkedBy`: `Modulate` → "Kardza Intelligence · checked by Modu
 
 Also check: the browser records **webm/opus** (Chrome) or **mp4** (Safari). `modulateName` only renames `.m4a`. Please confirm Modulate accepts `.webm`; if not, I can force `audio/mp4` where the browser supports it.
 
+### R3. ⛔ Kardza Intelligence: `analyzeOffer()` (new `src/server/intelligence.ts`, called from `voice+api.ts` and `message+api.ts`)
+
+Blocks the demo's "AI checked the offer" line, `[Let Leo see it]` evidence, and the parent reason. The UI already reads
+`offer.analysis` (type `OfferAnalysis` in `src/lib/demo.ts`) and falls back to today's `message.risk` when it's missing.
+
+```ts
+/// <reference types="node" />
+// Kardza Intelligence: fairness + safety for one offer. Rules first (never miss the obvious), then Claude → Gemini
+// can only ADD risks or raise the level. Fairness is arithmetic; the AI only words it.
+import type { User } from '@/lib/types';
+import { aiJSON } from './ai';
+
+export type Risk = { type: string; evidence: string };
+export type OfferAnalysis = {
+  fairness: { fair: boolean; marketValue: number; gap: number; message: string };
+  risks: Risk[];
+  riskLevel: 'none' | 'low' | 'high';
+  redactedTranscript?: string;
+  reasonForParent?: string;
+  checkedBy: string[];
+};
+
+const PRE: { type: string; re: RegExp }[] = [
+  { type: 'off_platform_contact', re: /(\+?\d[\d\s().-]{6,}\d)|\b(five|six|seven|eight|nine|zero|one|two|three|four)(\s+(five|six|seven|eight|nine|zero|one|two|three|four)){5,}\b|<pii:phone>.*?<\/pii:phone>/i },
+  { type: 'off_platform_contact', re: /\b(text|dm|message|call|snap|add)\s+me\b|whats\s?app|discord|snapchat|insta(gram)?|telegram|(^|\s)@[a-z0-9_.]{3,}/i },
+  { type: 'pii', re: /[\w.+-]+@[\w-]+\.[\w.]+/ },
+  { type: 'secrecy', re: /\b(don'?t|do not)\s+tell\b|\bour secret\b|\bkeep (it|this) (a )?secret\b/i },
+  { type: 'meet_in_person', re: /\bmeet\b|\bafter school\b|\bcome over\b|\bpick (it|you) up\b/i },
+  { type: 'pressure', re: /\bhurry\b|\bright now\b|\boffer ends\b|\btonight\b|\blast chance\b|\btrust me\b/i },
+  { type: 'payment_outside', re: /\b(gift ?card|venmo|cash ?app|paypal|zelle)\b/i },
+];
+
+export function preCheck(text: string): Risk[] {
+  const out: Risk[] = [];
+  for (const { type, re } of PRE) {
+    const m = text.match(re);
+    if (m && !out.some((r) => r.type === type)) out.push({ type, evidence: m[0].replace(/<\/?pii:\w+>/g, '').trim() });
+  }
+  return out;
+}
+
+export const redactBlocks = (t: string) =>
+  t.replace(/<pii:\w+>.*?<\/pii:\w+>/gi, '▇▇▇-▇▇▇▇')
+   .replace(/(\+?\d[\d\s().-]{6,}\d)/g, '▇▇▇-▇▇▇▇')
+   .replace(/\b(five|six|seven|eight|nine|zero|one|two|three|four)(\s+(five|six|seven|eight|nine|zero|one|two|three|four)){5,}\b/gi, '▇▇▇-▇▇▇▇')
+   .replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, '▇▇▇@▇▇▇');
+
+export async function analyzeOffer(input: {
+  amount: number;            // cash + offered card value
+  marketValue: number;       // listing card price
+  transcript?: string;       // Modulate-tagged
+  voiceSignals?: { deepfake?: number; emotions?: string[]; behaviors?: string[] };
+  sender: User;
+  recipient: User & { pronoun?: string };
+}): Promise<OfferAnalysis> {
+  const { amount, marketValue, transcript = '' } = input;
+  const gap = Math.max(0, Math.round(marketValue - amount));
+  const fair = marketValue ? amount / marketValue >= 0.7 : true;
+  const risks = preCheck(transcript);
+  if ((input.voiceSignals?.deepfake ?? 0) > 0.85) risks.push({ type: 'synthetic_voice', evidence: `${Math.round(input.voiceSignals!.deepfake! * 100)}% synthetic` });
+  const checkedBy = ['rules'];
+  let reasonForParent = risks.some((r) => r.type === 'off_platform_contact')
+    ? `asking ${input.recipient.pronoun ?? 'them'} to text a phone number`
+    : risks.length ? 'that broke our safety rules' : undefined;
+
+  if (transcript) {
+    try {
+      const ai = await aiJSON<{ risks: Risk[]; reasonForParent: string }>(
+        {
+          text: `You check messages on a trading-card marketplace used by kids. Sender: ${input.sender.name}. Recipient is a minor.
+List every risk as {type, evidence} with type one of off_platform_contact, pii, pressure, secrecy, meet_in_person, payment_outside,
+and evidence = the exact words. Then reasonForParent: a short clause that finishes "${input.sender.name} sent ${input.recipient.name} a voice note …",
+e.g. "asking ${input.recipient.pronoun ?? 'them'} to text a phone number". Never quote a phone number.
+Message: """${transcript.slice(0, 1500)}"""`,
+        },
+        {
+          type: 'object',
+          properties: {
+            risks: { type: 'array', items: { type: 'object', properties: { type: { type: 'string' }, evidence: { type: 'string' } }, required: ['type', 'evidence'], additionalProperties: false } },
+            reasonForParent: { type: 'string' },
+          },
+          required: ['risks', 'reasonForParent'],
+          additionalProperties: false,
+        },
+      );
+      checkedBy.push(ai.model);
+      for (const r of ai.data.risks) if (!risks.some((x) => x.type === r.type)) risks.push({ type: r.type, evidence: redactBlocks(r.evidence) });
+      if (ai.data.reasonForParent) reasonForParent = ai.data.reasonForParent;
+    } catch (e) {
+      console.warn('[intel] AI skipped, rules only:', String(e).slice(0, 120));
+    }
+  }
+
+  const high = risks.some((r) => r.type !== 'synthetic_voice');
+  return {
+    fairness: {
+      fair,
+      marketValue: Math.round(marketValue),
+      gap,
+      message: fair ? 'This trade looks fair.' : `This trade isn't fair. Your card is worth about $${Math.round(marketValue)}.`,
+    },
+    risks: risks.map((r) => ({ ...r, evidence: redactBlocks(r.evidence) })),
+    riskLevel: high ? 'high' : risks.length ? 'low' : 'none',
+    redactedTranscript: transcript ? redactBlocks(transcript) : undefined,
+    reasonForParent,
+    checkedBy,
+  };
+}
+```
+
+Wire it in `voice+api.ts` after the transcript, before `mutate`:
+```ts
+const pre = await readDB();
+const offer = pre.offers.find((o) => o.id === offerId)!;
+const { want, give } = offerValues(pre, offer);
+const analysis = await analyzeOffer({
+  amount: give, marketValue: want, transcript: tagged,
+  voiceSignals: { deepfake, emotions },
+  sender: pre.users[fromId], recipient: pre.users[offer.toId === fromId ? offer.fromId : offer.toId],
+});
+// keep msg.risk for old screens; the UI prefers offer.analysis
+msg.risk = { level: analysis.riskLevel, reasons: analysis.risks.map((r) => r.type) };
+msg.redacted = analysis.redactedTranscript ?? msg.redacted;
+const db = await mutate((d) => {
+  const o = d.offers.find((x) => x.id === offerId);
+  if (o) (o as Offer & { analysis?: OfferAnalysis }).analysis = analysis;
+  deliverMessage(d, msg);
+});
+```
+And the same `analyzeOffer` (no transcript) in `createOffer`'s route, so the fairness verdict exists before any voice note. Add `analysis?: OfferAnalysis` to `Offer` in `types.ts`.
+Note `msg.risk.reasons` becomes risk **types**; MessageView only shows reasons to adults, so that's fine, or keep `ruleCheck` reasons there.
+
 ## Round 1 audit: does each demo step work? (tested on my laptop, `localhost:8082`, real k-ID + live Modulate)
 
 | # | Step | Status | What's true today |

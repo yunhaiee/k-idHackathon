@@ -8,7 +8,7 @@ import { Btn, Eyebrow, H, Note, Page, Rule, Txt } from '@/components/ui';
 import { act, useDB } from '@/lib/api';
 import { useCheckout } from '@/lib/checkout';
 import { COPY } from '@/lib/copy';
-import { cashOf, credibilityOf } from '@/lib/demo';
+import { cashOf, credibilityOf, type DemoOffer, pronounOf } from '@/lib/demo';
 import { getPolicy } from '@/lib/policy';
 import { PRODUCTS } from '@/lib/seed';
 import { useDevice } from '@/lib/device';
@@ -39,6 +39,7 @@ export default function FamilyOrMe() {
     (a) => a.parentId === persona && !a.read && (a.messageId || !a.offerId || !reviewed.has(a.offerId)),
   );
   const credibility = credibilityOf(me);
+  const offerOf = (id: string) => db.offers.find((o) => o.id === id) as DemoOffer | undefined;
 
   return (
     <Page>
@@ -63,7 +64,14 @@ export default function FamilyOrMe() {
             const sender = msg ? db.users[msg.fromId] : undefined;
             const reason =
               msg?.kind === 'voice' && sender
-                ? COPY.parent.voiceAlert(sender.name, getPolicy(sender).band, db.users[a.childId].name, msg.risk?.reasons ?? [])
+                ? COPY.parent.voiceAlert(
+                    sender.name,
+                    getPolicy(sender).band,
+                    db.users[a.childId].name,
+                    msg.risk?.reasons ?? [],
+                    pronounOf(db.users[a.childId]),
+                    offerOf(msg.offerId)?.analysis?.reasonForParent,
+                  )
                 : a.reason;
             const isBlocked = sender ? blocked.includes(sender.id) : false;
             return (

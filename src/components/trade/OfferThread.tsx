@@ -5,14 +5,14 @@ import { Btn, Eyebrow, Note, Rule, Txt } from '@/components/ui';
 import { WhyChip } from '@/components/WhyChip';
 import { act } from '@/lib/api';
 import { COPY } from '@/lib/copy';
-import { cashOf, credibilityOf, heldForParent } from '@/lib/demo';
+import { analysisOf, cashOf, credibilityOf, heldForParent, RISK_LABEL } from '@/lib/demo';
 import { getPolicy } from '@/lib/policy';
 import { C } from '@/lib/theme';
 import type { DB, Offer, PersonaId } from '@/lib/types';
 
 import { Composer } from './Composer';
 import { FairMeter } from './FairMeter';
-import { MessageView } from './MessageView';
+import { checkedLabel, MessageView } from './MessageView';
 
 const value = (db: DB, ids: string[]) => ids.reduce((s, id) => s + (db.cards.find((c) => c.id === id)?.priceUsd ?? 0), 0);
 
@@ -30,6 +30,11 @@ export function OfferThread({ db, offer, me }: { db: DB; offer: Offer; me: Perso
   const sender = db.users[offer.fromId];
   const messages = db.messages.filter((m) => m.offerId === offer.id && (m.fromId === me || offer.fromId === me || offer.toId === me));
   const credibility = credibilityOf(sender);
+  const analysis = analysisOf(offer);
+  const voiceMsg = messages.find((m) => m.kind === 'voice');
+  const intel = voiceMsg
+    ? checkedLabel(voiceMsg).replace(`${COPY.intel.name} · `, '')
+    : COPY.intel.checkedBy(analysis?.checkedBy?.length ? analysis.checkedBy : ['AI']);
   const what = [...offered.map((c) => c.name), ...(cash ? [`$${cash}`] : [])].join(' + ') || 'An offer';
 
   // k-ID puts a parent in charge of this receiver's trades and messages: nothing reaches them directly.
@@ -65,7 +70,21 @@ export function OfferThread({ db, offer, me }: { db: DB; offer: Offer; me: Perso
           {what} → {wantCard?.name ?? 'card'}
         </Txt>
       </View>
-      <FairMeter give={give} want={want} role={role} policy={policy} />
+      <View style={{ gap: 6 }}>
+        <Eyebrow color={C.accent}>{COPY.intel.name}</Eyebrow>
+        <FairMeter give={give} want={analysis?.fairness.marketValue ?? want} role={role} policy={policy} />
+        {/* Adults see what was found and the evidence; kids and teens get the verdict and banners only. */}
+        {policy.band === 'adult' && analysis?.risks.length
+          ? analysis.risks.map((r) => (
+              <Txt key={r.type + r.evidence} size={13} color={C.danger}>
+                {`${RISK_LABEL[r.type] ?? r.type} · "${r.evidence}"`}
+              </Txt>
+            ))
+          : null}
+        <Txt size={11} color={C.muted}>
+          {intel}
+        </Txt>
+      </View>
 
       {messages.map((m) => (
         <MessageView
