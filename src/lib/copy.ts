@@ -14,6 +14,16 @@ export function credibilityLabel(score: number) {
   return 'New or low trust';
 }
 
+/**
+ * What the blocked voice note asked for, in a parent's words, from the server's risk reasons
+ * (e.g. "Shares a phone number", "Asks to keep a secret from a parent", "Asks to meet in person").
+ * Finishes the sentence "Devon (adult) sent Leo a voice note …. We blocked it."
+ */
+function alertAsk(reasons: string[]): string {
+  // TODO(human): pick the phrase for the riskiest reason(s); the script wants "asking them to text a phone number".
+  return reasons.some((r) => /phone|move off/i.test(r)) ? 'asking them to text a phone number' : 'that broke our safety rules';
+}
+
 export const COPY = {
   market: {
     aiPriced: 'Priced by AI',
@@ -55,9 +65,7 @@ export const COPY = {
     alertTitle: (child: string) => `About ${child}`,
     /** Built from the message's risk reasons; the parent never sees the audio or the chat. */
     voiceAlert: (sender: string, band: Band, child: string, reasons: string[]) =>
-      reasons.some((r) => /phone|move off/i.test(r))
-        ? `${sender} (${BAND_WORD[band]}) sent ${child} a voice note asking them to text a phone number. We blocked it.`
-        : `${sender} (${BAND_WORD[band]}) sent ${child} a voice note that broke our safety rules. We blocked it.`,
+      `${sender} (${BAND_WORD[band]}) sent ${child} a voice note ${alertAsk(reasons)}. We blocked it.`,
     block: (sender: string) => `Block ${sender}`,
     dismiss: 'Dismiss',
     offerReview: (sender: string, band: Band, child: string, offered: number, card: string, worth: number) =>
