@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { View } from 'react-native';
 
 import { CheckoutSheet } from '@/components/CheckoutSheet';
-import { Credibility } from '@/components/Credibility';
+import { CredibilityCard } from '@/components/Credibility';
 import { OfferThread } from '@/components/trade/OfferThread';
 import { Btn, Eyebrow, H, Note, Page, Rule, Txt } from '@/components/ui';
 import { act, useDB } from '@/lib/api';
@@ -65,7 +65,7 @@ export default function FamilyOrMe() {
         {policy.band === 'kid' ? 'Kid account' : policy.band === 'teen' ? 'Teen account' : 'Adult account'} ·{' '}
         {policy.countryName}
       </Txt>
-      {credibility != null ? <Credibility score={credibility} size={15} /> : null}
+      {credibility != null ? <CredibilityCard score={credibility} /> : null}
 
       {kids.length ? (
         <>

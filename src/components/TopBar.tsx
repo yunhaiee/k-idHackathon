@@ -4,7 +4,7 @@ import { Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { act, useDB } from '@/lib/api';
-import { FRAME, useDevice } from '@/lib/device';
+import { useDevice } from '@/lib/device';
 import { ACCESS_LABEL, COUNTRY_NAME, getPolicy, KID_PERMISSIONS, PERM_LABEL } from '@/lib/policy';
 import { C } from '@/lib/theme';
 import { COPY } from '@/lib/copy';
@@ -28,7 +28,7 @@ export function TopBar() {
   if (!user) return <View style={{ height: insets.top + 60, backgroundColor: C.bg }} />;
   const policy = getPolicy(user);
   // Inside a /demo phone each frame is one person, so the persona switcher would only break the illusion.
-  const inDemoFrame = Platform.OS === 'web' && typeof window !== 'undefined' && window.name.startsWith(FRAME);
+  const inDemoFrame = Platform.OS === 'web' && typeof window !== 'undefined' && window.self !== window.top;
   const personas = inDemoFrame ? [] : PERSONA_ORDER.filter((p) => db.users[p]);
 
   const statusLine =

@@ -6,7 +6,7 @@ const img = (set: string, n: number) => `https://images.pokemontcg.io/${set}/${n
 // seed ids go through this cast. People and items only: every rule comes from k-ID via getPolicy.
 const P = (id: string) => id as PersonaId;
 
-/** Seeded user + the demo's credibility score (not in User yet; see NOTES_FOR_YUNHA.md). */
+/** Seeded user + the demo's credibility score and pronoun. */
 export type SeedUser = User & { credibility?: number; pronoun?: string };
 
 /** Persona order for the switcher and the /demo phones. */
@@ -37,8 +37,8 @@ export const PRODUCTS: Product[] = [
 export function seedDB(): DB {
   const now = Date.now();
   const users: Record<string, SeedUser> = {
-    maya: { id: P('maya'), name: 'Maya', age: 14, country: 'US', kid: {} },
-    leo: { id: P('leo'), name: 'Leo', age: 14, country: 'DE', parentId: P('anna'), pronoun: 'him', kid: {} },
+    maya: { id: P('maya'), name: 'Maya', age: 14, country: 'US', credibility: 95, kid: {} },
+    leo: { id: P('leo'), name: 'Leo', age: 14, country: 'DE', parentId: P('anna'), pronoun: 'him', credibility: 88, kid: {} },
     anna: { id: P('anna'), name: 'Anna', age: 42, country: 'DE', kid: {} },
     devon: { id: P('devon'), name: 'Devon', age: 25, country: 'US', credibility: 62, kid: {} },
   };
