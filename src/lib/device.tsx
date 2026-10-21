@@ -2,7 +2,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 
+import { PERSONA_ORDER } from './seed';
 import type { PersonaId } from './types';
+
+/** A browser may remember a persona from an older demo; fall back instead of crashing on db.users[id]. */
+const valid = (id: string | null): id is PersonaId => !!id && (PERSONA_ORDER as string[]).includes(id);
 
 const KEY = 'kardza.persona';
 /** Prefix for window.name; /demo names each iframe `kardza-persona:<id>`. */
@@ -22,20 +26,19 @@ export function DeviceProvider({ children }: { children: ReactNode }) {
   const [persona, setP] = useState<PersonaId>('maya');
   useEffect(() => {
     const web = Platform.OS === 'web' && typeof window !== 'undefined';
-    const fromUrl = web
-      ? (((p) => p.get('as') ?? p.get('persona'))(new URLSearchParams(window.location.search)) as PersonaId | null)
-      : null;
+    const params = web ? new URLSearchParams(window.location.search) : null;
+    const fromUrl = params ? (params.get('as') ?? params.get('persona')) : null;
     // window.name is per frame and survives reloads, so each /demo phone keeps its own persona even though
     // all frames share one localStorage.
-    const fromFrame = web && window.name.startsWith(FRAME) ? (window.name.slice(FRAME.length) as PersonaId) : null;
-    const chosen = fromUrl ?? fromFrame;
+    const fromFrame = web && window.name.startsWith(FRAME) ? window.name.slice(FRAME.length) : null;
+    const chosen = valid(fromUrl) ? fromUrl : valid(fromFrame) ? fromFrame : null;
     if (chosen) {
       remember(chosen);
       setP(chosen);
       return;
     }
     AsyncStorage.getItem(KEY)
-      .then((v) => v && setP(v as PersonaId))
+      .then((v) => (valid(v) ? setP(v) : setP('maya')))
       .catch(() => {});
   }, []);
   const setPersona = (p: PersonaId) => {

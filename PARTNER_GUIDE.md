@@ -143,7 +143,7 @@ Other server endpoints (integrations team): `/api/message` (text + safety), `/ap
   - **Velma Triage (about 18s, background):** judges the whole conversation, e.g. "Child Safety Violation 95%", and adds it to Mom's alert.
 - **Claude (Anthropic):** card recognition from a photo, message safety second opinion. Gemini is wired as a fallback but Google's model is overloaded today.
 - **Pokémon TCG API:** real TCGplayer market prices for scanned cards (best effort, labeled; falls back to "AI estimate").
-- **FastSpring (real, test store `yunhakardza.test.onfastspring.com`):** after the server checks k-ID's purchase rules, it creates a real FastSpring checkout session and opens it in a new tab. The buyer pays with test card 4242 4242 4242 4242, then taps "I finished checkout", and our server **verifies the completed order with FastSpring** before marking it owned. A parent paying for a child is the buyer of record. (If FastSpring is unreachable it falls back to a labeled "Simulated FastSpring checkout".)
+- **FastSpring (real, working, test store `yunhakardza.test.onfastspring.com`):** the server checks k-ID's purchase rules, creates a real FastSpring checkout **session** with the buyer pre-filled (a parent paying for a child is the buyer of record), and opens it. Pay with test card 4242 4242 4242 4242 + **the store's test CVC** (from the product's Checkout Links panel in FastSpring), then tap "I finished checkout": the server finds the completed order on that buyer's FastSpring account before marking it owned. First real test order: KARDZAA261021-3561-14127.
 
 ## 9. Personas and real k-ID facts
 

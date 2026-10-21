@@ -1,4 +1,4 @@
-export type PersonaId = 'maya' | 'jordan' | 'mom';
+export type PersonaId = 'maya' | 'leo' | 'anna' | 'devon';
 export type Country = 'US' | 'DE' | 'GB' | 'KR';
 
 export type KidStatus = 'running' | 'pending' | 'pass' | 'prohibited' | 'fail' | 'error';
@@ -42,6 +42,10 @@ export type User = {
   /** Signs up live through the full k-ID widget (no age passed in). */
   liveSignup?: boolean;
   kid: Partial<Record<Country, KidRecord>>;
+  /** Trust score shown on offers; lowered when a message is blocked. */
+  credibility?: number;
+  /** Players this account (or their parent) blocked. */
+  blocked?: PersonaId[];
 };
 
 export type Card = {
@@ -64,7 +68,12 @@ export type Offer = {
   fromId: PersonaId;
   toId: PersonaId;
   offeredCardIds: string[];
-  status: 'pending' | 'needs-parent' | 'accepted' | 'declined';
+  cashUsd?: number;
+  /** Receiver's counter, in cash. */
+  counterUsd?: number;
+  status: 'pending' | 'needs-parent' | 'countered' | 'accepted' | 'declined';
+  /** A parent reviewed this offer before it reached their child. */
+  parentApproved?: boolean;
   createdAt: number;
 };
 
