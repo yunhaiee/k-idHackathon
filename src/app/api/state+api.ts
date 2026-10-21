@@ -4,7 +4,7 @@ import { runTask } from 'expo-server';
 
 import { mutate, readDB, uid, writeDB } from '@/server/db';
 import { applyPrices, refreshPrices } from '@/server/prices';
-import { createOffer, parentDecision, respondOffer } from '@/server/trade';
+import { block, counterOffer, createOffer, parentDecision, parentReviewOffer, respondOffer } from '@/server/trade';
 
 export async function GET(request: Request) {
   const since = Number(new URL(request.url).searchParams.get('v') ?? 0);
@@ -23,7 +23,10 @@ type Action =
       persona: PersonaId;
       card: { name: string; set: string; number: string; priceUsd: number; image: string };
     }
-  | { action: 'createOffer'; listingId: string; fromId: PersonaId; offeredCardIds: string[] }
+  | { action: 'createOffer'; listingId: string; fromId: PersonaId; offeredCardIds: string[]; cashUsd?: number }
+  | { action: 'counterOffer'; offerId: string; by: PersonaId; cashUsd: number }
+  | { action: 'parentReviewOffer'; offerId: string; by: PersonaId; approve: boolean }
+  | { action: 'block'; by: PersonaId; childId: PersonaId; blockedId: PersonaId }
   | { action: 'respondOffer'; offerId: string; by: PersonaId; accept: boolean }
   | { action: 'parentDecision'; requestId: string; approve: boolean }
   | { action: 'readAlert'; alertId: string }
@@ -54,7 +57,8 @@ async function handle(body: Action): Promise<Response> {
       const prev = await readDB();
       const db = seedDB();
       db.version = prev.version + 1;
-      for (const u of Object.values(db.users)) if (!u.liveSignup) u.kid = prev.users[u.id]?.kid ?? {};
+      for (const u of Object.values(db.users))
+        if (!u.liveSignup && prev.users[u.id]?.age === u.age) u.kid = prev.users[u.id].kid ?? {};
       // Real prices: apply the last good ones now, then refresh from TCGplayer in the background.
       db.priceCache = prev.priceCache;
       applyPrices(db);
@@ -83,7 +87,15 @@ async function handle(body: Action): Promise<Response> {
         }),
       );
     case 'createOffer':
-      return Response.json(await mutate((db) => void createOffer(db, body.listingId, body.fromId, body.offeredCardIds)));
+      return Response.json(
+        await mutate((db) => void createOffer(db, body.listingId, body.fromId, body.offeredCardIds, body.cashUsd)),
+      );
+    case 'counterOffer':
+      return Response.json(await mutate((db) => counterOffer(db, body.offerId, body.by, body.cashUsd)));
+    case 'parentReviewOffer':
+      return Response.json(await mutate((db) => parentReviewOffer(db, body.offerId, body.by, body.approve)));
+    case 'block':
+      return Response.json(await mutate((db) => block(db, body.by, body.childId, body.blockedId)));
     case 'respondOffer':
       return Response.json(await mutate((db) => respondOffer(db, body.offerId, body.by, body.accept)));
     case 'parentDecision':

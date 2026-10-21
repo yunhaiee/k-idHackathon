@@ -7,10 +7,14 @@ import { KID_PERMISSIONS } from '@/lib/policy';
 import { C } from '@/lib/theme';
 import type { Country } from '@/lib/types';
 
+// Privacy/terms are our public /privacy and /terms pages. k-ID only accepts https links, so on plain-http
+// localhost they're left out (k-ID keeps its defaults).
+const origin = typeof window !== 'undefined' && window.location.protocol === 'https:' ? window.location.origin : null;
 const DECLARE = {
   permissions: KID_PERMISSIONS.map((name) => ({ name })),
   supportEmail: 'yunhalee@stanford.edu',
   iconUrl: '/icon.png',
+  ...(origin ? { privacyPolicyUrl: `${origin}/privacy`, termsOfServiceUrl: `${origin}/terms` } : {}),
 };
 
 const APPEARANCE = {

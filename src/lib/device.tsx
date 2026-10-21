@@ -2,7 +2,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 
+import { PERSONA_ORDER } from './seed';
 import type { PersonaId } from './types';
+
+/** A browser may remember a persona from an older demo; fall back instead of crashing on db.users[id]. */
+const valid = (id: string | null): id is PersonaId => !!id && (PERSONA_ORDER as string[]).includes(id);
 
 const KEY = 'kardza.persona';
 const Ctx = createContext<{ persona: PersonaId; setPersona: (p: PersonaId) => void }>({
@@ -18,13 +22,13 @@ export function DeviceProvider({ children }: { children: ReactNode }) {
       Platform.OS === 'web' && typeof window !== 'undefined'
         ? (new URLSearchParams(window.location.search).get('as') as PersonaId | null)
         : null;
-    if (fromUrl) {
+    if (valid(fromUrl)) {
       setP(fromUrl);
       AsyncStorage.setItem(KEY, fromUrl).catch(() => {});
       return;
     }
     AsyncStorage.getItem(KEY)
-      .then((v) => v && setP(v as PersonaId))
+      .then((v) => (valid(v) ? setP(v) : setP('maya')))
       .catch(() => {});
   }, []);
   const setPersona = (p: PersonaId) => {

@@ -214,3 +214,24 @@ const DECLARE = {
 | `src/app/(tabs)/parent.tsx`, `shop.tsx`, `index.tsx`, `_layout.tsx`, `src/app/listing/[id].tsx`, `src/components/TopBar.tsx` | Parent review/alert/purchase copy, Priced by AI, personas from data (no hardcoded `'mom'`) |
 | `src/app/privacy.tsx`, `src/app/terms.tsx`, `src/components/Legal.tsx` (new) | M5 legal pages |
 | `src/app/+html.tsx` (new), `public/manifest.json` (new), icons | M5 PWA: standalone, `#0A0A0F`, Kardza logo icon |
+
+---
+
+## ✅ Done on Yunha's side (12:50) — pull `main`
+
+All server changes above are in `main` and tested end to end on the demo laptop:
+
+- **0. types.ts:** `PersonaId = 'maya' | 'leo' | 'anna' | 'devon'`; `User.credibility`, `User.blocked`; `Offer.cashUsd`, `Offer.counterUsd`, status `'countered'`, `Offer.parentApproved`. You can drop the `P()` cast in `seed.ts` and the defensive reads in `src/lib/demo.ts`.
+- **0b. Prices:** instead of skipping the refresh, both demo Charizards are now **real cards worth ~$70**: Maya's = **Charizard Flashfire 13/106, $71.47**; Leo's = **Charizard Legendary Treasures 19/113, $76.24** (TCGplayer market, Oct 15). `AI_PRICED_CARD_IDS` is empty, so please replace the "Priced by AI" label with `card.priceSource` (e.g. "TCGplayer market · Flashfire · updated 2026/10/15"). All 7 cards have real prices.
+- **1. Cash:** `createOffer` accepts `cashUsd`; `offerValues` adds it, so the fair check sees $20 vs $71.
+- **2. Parent hold:** an offer to a child whose trading a parent manages (`tradeNeedsParent && parentId`, i.e. Leo) is created as `needs-parent` and never reaches the child until the parent reviews it. New action `parentReviewOffer {offerId, by, approve}` → `pending` + `parentApproved`. `respondOffer` skips the second parent step when `parentApproved`. **Switch Anna's [Decline]/[Approve] to `parentReviewOffer`.**
+- **3. Block:** action `block {by, childId, blockedId}`; declines open offers from them; `createOffer` throws "This player blocked you"; `deliverMessage` drops their messages.
+- **4. Credibility:** −5 on a high-risk message, once per one-minute burst → "send to both" gives **62 → 57**.
+- **5. Counter:** action `counterOffer {offerId, by, cashUsd}` → `countered`; the original sender `respondOffer {accept:true}` → `accepted` with `cashUsd = counterUsd` ("Deal agreed."). **Add the "Counter at $65" (Maya) and "Accept" (Devon) controls in `OfferThread.tsx`.**
+- **6. FastSpring:** `holo-binder-theme` is $4.99 in FastSpring now. Checkout opens FastSpring's real test checkout; test card payments are blocked by the sandbox ("Not supported while in testing mode"), waiting on Adam.
+- **7. Declare:** `/privacy` + `/terms` are sent to k-ID automatically from `window.location.origin` when the page is https (the tunnel), left out on http localhost.
+- **8. device.tsx:** stored persona ids that aren't in `PERSONA_ORDER` fall back to Maya (no more crash).
+
+Tested: Devon → both $20 + voice notes: Leo's held for Anna, Maya's delivered, credibility 62 → 57, 1 alert; Anna approves → pending; Maya counters $65 → Devon accepts → accepted at $65; Anna blocks Devon → declined + refused.
+
+**k-ID before the demo (real, no simulation):** Leo needs Anna's real consent email (Germany, consent age 16). Maya (14, US) has trading **guardian-managed** by k-ID: before the demo she asks for "Virtual Property Ownership" in k-ID Settings and a guardian inbox approves it (option a, the honest one), plus she switches on Messages and Voice herself.
