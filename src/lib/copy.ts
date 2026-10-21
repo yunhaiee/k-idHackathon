@@ -29,6 +29,15 @@ export const COPY = {
     aiPriced: 'Priced by AI',
   },
 
+  offer: {
+    make: 'Make offer',
+    addCards: 'Add cards from your binder (optional)',
+    alsoSimilar: (n: number, card: string) => `Also send to ${n} similar ${card} listing${n === 1 ? '' : 's'}`,
+    send: 'Send offer',
+    sending: 'Sending offer…',
+    newOffer: (sender: string, card: string) => `New offer from ${sender} on your ${card}`,
+  },
+
   fair: {
     unfairTitle: "This trade isn't fair.",
     unfairBody: (worth: number) => `Your card is worth about ${usd(worth)}.`,
@@ -39,6 +48,17 @@ export const COPY = {
     /** Teen receiver, risky voice note: delivered and playable, with this banner on top. */
     scamBanner: "⚠️ This message asks you to move off Kardza. That's a common scam. Never share your number.",
     play: '▶ Play voice note',
+    pause: '❚❚ Pause',
+    hold: '🎤 Hold to record',
+    asking: 'Allow the microphone, then hold to record.',
+    ready: 'Mic ready. Hold to record (up to 15s).',
+    denied: "Microphone blocked. Use the sample voice note, or allow the mic in your browser's site settings.",
+    recorded: (len: string) => `Voice note · ${len}`,
+    sampleAttached: 'Sample voice note attached',
+    sample: 'Use sample voice note',
+    remove: 'Remove',
+    checking: 'Checking voice note…',
+    simulated: '(voice check simulated)',
     offHint: 'Voice notes are off for you. Turn them on in k-ID settings to play them.',
     /** Receiver whose parent decides (kid band): nothing arrives but this. */
     hidden: 'A message was hidden for your safety. We told your parent.',

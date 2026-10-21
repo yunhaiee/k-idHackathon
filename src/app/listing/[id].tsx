@@ -1,24 +1,31 @@
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, TextInput, View } from 'react-native';
 
 import { Price } from '@/components/Price';
 import { TopBar } from '@/components/TopBar';
 import { FairMeter } from '@/components/trade/FairMeter';
+import { sendVoiceNote, VoiceRecorder, type VoiceNote } from '@/components/trade/VoiceRecorder';
 import { Btn, Eyebrow, H, Note, Page, Rule, Txt } from '@/components/ui';
-import { act, useDB } from '@/lib/api';
+import { act, refreshDB, useDB } from '@/lib/api';
 import { COPY } from '@/lib/copy';
 import { useDevice } from '@/lib/device';
 import { getPolicy } from '@/lib/policy';
 import { AI_PRICE_SOURCE } from '@/lib/seed';
-import { C } from '@/lib/theme';
+import { C, F } from '@/lib/theme';
+import type { DB } from '@/lib/types';
 
 export default function ListingScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const db = useDB();
   const { persona } = useDevice();
+  const [open, setOpen] = useState(false);
+  const [cash, setCash] = useState('');
   const [picked, setPicked] = useState<string[]>([]);
+  const [voice, setVoice] = useState<VoiceNote | null>(null);
+  const [alsoSimilar, setAlsoSimilar] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   if (!db) return null;
   const listing = db.listings.find((l) => l.id === id);
@@ -37,14 +44,40 @@ export default function ListingScreen() {
   const policy = getPolicy(me);
   const mine = listing.sellerId === persona;
   const binder = db.cards.filter((c) => c.ownerId === persona && !db.listings.some((l) => l.cardId === c.id));
-  const give = binder.filter((c) => picked.includes(c.id)).reduce((s, c) => s + c.priceUsd, 0);
+  const cashUsd = Math.max(0, Math.round(Number(cash.replace(/[^0-9.]/g, '')) || 0));
+  const give = binder.filter((c) => picked.includes(c.id)).reduce((s, c) => s + c.priceUsd, 0) + cashUsd;
   const trade = policy.access['virtual-property-ownership'];
+  // Other listings of the same card from other sellers: one send can reach them all.
+  const similar = db.listings.filter(
+    (l) => l.id !== listing.id && l.sellerId !== persona && db.cards.find((c) => c.id === l.cardId)?.name === card.name,
+  );
 
   const send = async () => {
     setError(null);
-    const res = await act({ action: 'createOffer', listingId: listing.id, fromId: persona, offeredCardIds: picked });
-    if ((res as unknown as { error?: string }).error) setError((res as unknown as { error: string }).error);
-    else router.push('/inbox');
+    const targets = [listing, ...(alsoSimilar ? similar : [])];
+    try {
+      setBusy(COPY.offer.sending);
+      const offerIds: string[] = [];
+      for (const l of targets) {
+        // cashUsd is ignored by the server until it stores cash on offers (NOTES_FOR_YUNHA.md).
+        const res = (await act({ action: 'createOffer', listingId: l.id, fromId: persona, offeredCardIds: picked, cashUsd })) as DB & {
+          error?: string;
+        };
+        if (res.error) throw new Error(res.error);
+        const offer = res.offers.find((o) => o.listingId === l.id && o.fromId === persona);
+        if (offer) offerIds.push(offer.id);
+      }
+      if (voice) {
+        setBusy(COPY.voice.checking);
+        await Promise.all(offerIds.map((offerId) => sendVoiceNote(offerId, persona, voice)));
+        await refreshDB();
+      }
+      router.push('/inbox');
+    } catch (e) {
+      setError(String((e as Error).message ?? e));
+    } finally {
+      setBusy(null);
+    }
   };
 
   return (
@@ -73,34 +106,93 @@ export default function ListingScreen() {
           </View>
         ) : trade !== 'on' ? (
           <Note title="Trading isn't available for you here">k-ID's rules for your age and country.</Note>
+        ) : !open ? (
+          <Btn label={COPY.offer.make} onPress={() => setOpen(true)} big={policy.bigUI} />
         ) : (
-          <View style={{ gap: 10 }}>
-            <Eyebrow>Make an offer · pick cards from your binder</Eyebrow>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-              {binder.map((c) => {
-                const on = picked.includes(c.id);
-                return (
-                  <Pressable
-                    key={c.id}
-                    onPress={() => setPicked((p) => (on ? p.filter((x) => x !== c.id) : [...p, c.id]))}
-                    style={{
-                      alignItems: 'center',
-                      gap: 4,
-                      padding: 6,
-                      borderRadius: 10,
-                      borderWidth: 1,
-                      borderColor: on ? C.accent : C.line,
-                    }}>
-                    <Image source={c.image} style={{ width: 64, height: 88 }} contentFit="contain" />
-                    <Txt size={12} color={on ? C.text : C.muted}>
-                      {c.name}
-                    </Txt>
-                  </Pressable>
-                );
-              })}
+          <View style={{ gap: 12 }}>
+            <Eyebrow>{COPY.offer.make}</Eyebrow>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Txt weight="display" size={24}>
+                $
+              </Txt>
+              <TextInput
+                value={cash}
+                onChangeText={setCash}
+                placeholder="20"
+                placeholderTextColor={C.muted}
+                inputMode="decimal"
+                keyboardType="decimal-pad"
+                style={{
+                  flex: 1,
+                  color: C.text,
+                  fontFamily: F.display,
+                  fontSize: 24,
+                  borderBottomWidth: 1,
+                  borderBottomColor: C.line,
+                  paddingVertical: 6,
+                }}
+              />
             </View>
-            {picked.length ? <FairMeter give={give} want={card.priceUsd} role="sender" policy={policy} /> : null}
-            <Btn label="Send offer" disabled={!picked.length} onPress={send} big={policy.bigUI} />
+
+            {binder.length ? (
+              <>
+                <Txt size={13} color={C.muted}>
+                  {COPY.offer.addCards}
+                </Txt>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+                  {binder.map((c) => {
+                    const on = picked.includes(c.id);
+                    return (
+                      <Pressable
+                        key={c.id}
+                        onPress={() => setPicked((p) => (on ? p.filter((x) => x !== c.id) : [...p, c.id]))}
+                        style={{
+                          alignItems: 'center',
+                          gap: 4,
+                          padding: 6,
+                          borderRadius: 10,
+                          borderWidth: 1,
+                          borderColor: on ? C.accent : C.line,
+                        }}>
+                        <Image source={c.image} style={{ width: 48, height: 66 }} contentFit="contain" />
+                        <Txt size={12} color={on ? C.text : C.muted}>
+                          {c.name}
+                        </Txt>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </>
+            ) : null}
+
+            {give ? <FairMeter give={give} want={card.priceUsd} role="sender" policy={policy} /> : null}
+
+            {policy.access['voice-chat'] === 'on' ? <VoiceRecorder value={voice} onChange={setVoice} /> : null}
+
+            {similar.length ? (
+              <Pressable onPress={() => setAlsoSimilar((v) => !v)} style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                <View
+                  style={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: 5,
+                    borderWidth: 1,
+                    borderColor: alsoSimilar ? C.accent : C.line,
+                    backgroundColor: alsoSimilar ? C.accent : 'transparent',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                  {alsoSimilar ? (
+                    <Txt size={13} weight="semi" color="#fff">
+                      ✓
+                    </Txt>
+                  ) : null}
+                </View>
+                <Txt>{COPY.offer.alsoSimilar(similar.length, card.name)}</Txt>
+              </Pressable>
+            ) : null}
+
+            <Btn label={busy ?? COPY.offer.send} disabled={!give || !!busy} loading={false} onPress={send} big={policy.bigUI} />
             {error ? <Note tone="danger" title={error} /> : null}
           </View>
         )}
