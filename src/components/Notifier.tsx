@@ -12,7 +12,14 @@ import type { DB, PersonaId } from '@/lib/types';
  * and returns unread counts per tab for the badges. Opening a tab marks its events read.
  */
 export function useNotifications(db: DB | null, me: PersonaId) {
-  const events = useMemo(() => (db ? eventsFor(db, me) : []), [db, me]);
+  // Re-check every 2s too: an offer with no voice note is announced after a short wait, even if no new data arrives.
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setTick((n) => n + 1), 2000);
+    return () => clearInterval(t);
+  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const events = useMemo(() => (db ? eventsFor(db, me) : []), [db, me, tick]);
   const pathname = usePathname();
   const [read, setRead] = useState<Set<string> | null>(null);
   const [toast, setToast] = useState<NotifyEvent | null>(null);

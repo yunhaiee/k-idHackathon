@@ -11,10 +11,13 @@ import type { DB, PersonaId } from './types';
 export type NotifyTab = 'inbox' | 'parent' | 'shop';
 export type NotifyEvent = { id: string; tab: NotifyTab; text: string; tone: 'info' | 'danger' | 'ok' };
 
+/** How long to wait for an offer's voice note before announcing the offer on its own. */
+const SETTLE_MS = 15_000;
+
 export const TAB_PATH: Record<NotifyTab, string> = { inbox: '/inbox', parent: '/parent', shop: '/shop' };
 
 /** Everything that has "arrived" for this persona, worded for them by their k-ID policy. */
-export function eventsFor(db: DB, me: PersonaId): NotifyEvent[] {
+export function eventsFor(db: DB, me: PersonaId, now = Date.now()): NotifyEvent[] {
   const user = db.users[me];
   if (!user) return [];
   const policy = getPolicy(user);
@@ -26,28 +29,35 @@ export function eventsFor(db: DB, me: PersonaId): NotifyEvent[] {
   };
 
   for (const o of db.offers as DemoOffer[]) {
-    const risky = db.messages.some((m) => m.offerId === o.id && m.fromId !== me && m.risk?.level === 'high');
-    if (o.toId === me) {
+    // An offer and its voice note land a few seconds apart; announce them as one arrival, once the note is in
+    // (or after SETTLE_MS if there is none), so the first toast already says the right thing.
+    const notes = db.messages.filter((m) => m.offerId === o.id && m.fromId !== me);
+    const settled = notes.some((m) => m.fromId === o.fromId) || now - o.createdAt > SETTLE_MS;
+    const risky = notes.some((m) => m.risk?.level === 'high');
+    if (o.toId === me && settled) {
       const held = heldForParent(policy) && !o.parentApproved;
-      if (held) {
-        out.push(
-          risky
-            ? { id: `hidden:${o.id}`, tab: 'inbox', text: COPY.voice.hidden, tone: 'danger' }
-            : { id: `held:${o.id}`, tab: 'inbox', text: COPY.voice.held, tone: 'info' },
-        );
-      } else {
-        out.push({ id: `offer:${o.id}`, tab: 'inbox', text: COPY.offer.newOffer(name(o.fromId), cardOf(o.listingId)), tone: 'info' });
-        for (const m of db.messages)
-          if (m.offerId === o.id && m.fromId !== me)
+      out.push(
+        held
+          ? { id: `arrive:${o.id}`, tab: 'inbox', text: risky ? COPY.voice.hidden : COPY.voice.held, tone: risky ? 'danger' : 'info' }
+          : { id: `arrive:${o.id}`, tab: 'inbox', text: COPY.offer.newOffer(name(o.fromId), cardOf(o.listingId)), tone: risky ? 'danger' : 'info' },
+      );
+      if (o.parentApproved)
+        out.push({ id: `released:${o.id}`, tab: 'inbox', text: COPY.notify.released(name(o.fromId)), tone: 'info' });
+      // The sender's first note belongs to the offer's single notification, however late Modulate returns it;
+      // only later replies in the thread are their own notifications.
+      const attached = notes.find((m) => m.fromId === o.fromId);
+      if (!held)
+        for (const m of notes)
+          if (m !== attached)
             out.push({ id: `msg:${m.id}`, tab: 'inbox', text: COPY.notify.voice(name(m.fromId), m.kind), tone: m.risk?.level === 'high' ? 'danger' : 'info' });
-      }
     }
     if (o.fromId === me) {
       if (o.status === 'countered' && o.counterUsd != null)
         out.push({ id: `counter:${o.id}`, tab: 'inbox', text: COPY.notify.counter(name(o.toId), o.counterUsd), tone: 'info' });
+      // One credibility nudge per burst ("send to both" flags two copies of the same note).
       for (const m of db.messages)
         if (m.offerId === o.id && m.fromId === me && m.risk?.level === 'high')
-          out.push({ id: `flag:${m.id}`, tab: 'inbox', text: COPY.sender.flagged(5), tone: 'danger' });
+          out.push({ id: `flag:${Math.floor(m.createdAt / 60_000)}`, tab: 'inbox', text: COPY.sender.flagged(5), tone: 'danger' });
     }
     if ((o.fromId === me || o.toId === me) && o.status === 'accepted')
       out.push({ id: `deal:${o.id}`, tab: 'inbox', text: COPY.notify.deal(name(o.fromId === me ? o.toId : o.fromId)), tone: 'ok' });
@@ -73,7 +83,8 @@ export function eventsFor(db: DB, me: PersonaId): NotifyEvent[] {
       if (product) out.push({ id: `owned:${p.id}`, tab: 'shop', text: COPY.notify.owned(product.name), tone: 'ok' });
     }
 
-  return out;
+  // Same id twice (e.g. one flag for a two-offer burst) counts once.
+  return [...new Map(out.map((e) => [e.id, e])).values()];
 }
 
 const key = (me: PersonaId) => `kardza.read.${me}`;

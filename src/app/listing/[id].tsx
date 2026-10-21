@@ -85,7 +85,8 @@ export default function ListingScreen() {
       }
       step = COPY.offer.stepDeliver;
       await refreshDB();
-      router.push('/inbox');
+      // The inbox opens with a 'Sent' confirmation for exactly these offers.
+      router.push({ pathname: '/inbox', params: { sent: offerIds.join(',') } });
     } catch (e) {
       setError(`${step}: ${String((e as Error).message ?? e)}`);
     } finally {

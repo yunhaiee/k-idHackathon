@@ -4,6 +4,10 @@
 > Two small changes on top of yours, please check:
 > 1. `src/server/trade.ts` `respondOffer`: removed `&& !offer.parentApproved`. After "Let Leo see it", Leo accepting still goes to Anna for the final OK, as the demo script says.
 > 2. `src/app/(tabs)/parent.tsx`: Anna's review list now reads your held state (`needs-parent`, no `parentApproved`, no request yet).
+> 3. `src/lib/checkout.ts` (your file, small): inside a `/demo` iframe the browser blocks the checkout pop-up (the blank tab
+>    opened on tap comes back `null`, and the `openBrowserAsync` fallback runs after the await, so it's blocked too: nothing opens).
+>    `pending` now keeps `url` + `blocked`, and `CheckoutSheet` shows **Open FastSpring checkout**, which opens it from a direct tap.
+>    I saw this on your live `/demo`: `/api/checkout` returned a real session URL, but both `window.open` calls returned `null`.
 > Also merged: your `?as=` persona check with my `?persona=` + per-frame memory (`src/lib/device.tsx`), and your real ~$70 Charizards (`seed.ts`).
 
 New demo: **Maya 14 🇺🇸 · Leo 14 🇩🇪 · Anna (Leo's mom) · Devon 25 🇺🇸**, shown side by side at **`/demo`**.

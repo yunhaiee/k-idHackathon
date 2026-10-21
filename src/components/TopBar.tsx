@@ -1,10 +1,10 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { act, useDB } from '@/lib/api';
-import { useDevice } from '@/lib/device';
+import { FRAME, useDevice } from '@/lib/device';
 import { ACCESS_LABEL, COUNTRY_NAME, getPolicy, KID_PERMISSIONS, PERM_LABEL } from '@/lib/policy';
 import { C } from '@/lib/theme';
 import { COPY } from '@/lib/copy';
@@ -27,7 +27,9 @@ export function TopBar() {
   const user = db.users[persona];
   if (!user) return <View style={{ height: insets.top + 60, backgroundColor: C.bg }} />;
   const policy = getPolicy(user);
-  const personas = PERSONA_ORDER.filter((p) => db.users[p]);
+  // Inside a /demo phone each frame is one person, so the persona switcher would only break the illusion.
+  const inDemoFrame = Platform.OS === 'web' && typeof window !== 'undefined' && window.name.startsWith(FRAME);
+  const personas = inDemoFrame ? [] : PERSONA_ORDER.filter((p) => db.users[p]);
 
   const statusLine =
     policy.status === 'pass'

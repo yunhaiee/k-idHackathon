@@ -1,8 +1,8 @@
 // Demo-layer helpers. Fields the server doesn't store yet (cash on offers, credibility) are read defensively,
 // so the UI lights up as soon as NOTES_FOR_YUNHA.md lands, without touching types.ts.
-import type { Policy } from './policy';
+import { getPolicy, type Policy } from './policy';
 import type { SeedUser } from './seed';
-import type { Offer, User } from './types';
+import type { DB, Offer, User } from './types';
 
 /** Kardza Intelligence result for one offer: `analyzeOffer()` on the server (NOTES_FOR_YUNHA.md, R3). */
 export type OfferAnalysis = {
@@ -57,5 +57,19 @@ export const heldForParent = (policy: Policy) =>
 export const tradeNeedsParentApproval = (policy: Policy) => policy.tradeNeedsParent && policy.band === 'kid';
 export const tradeNeedsGuardianOptIn = (policy: Policy) =>
   !tradeNeedsParentApproval(policy) && policy.access['virtual-property-ownership'] === 'parent';
+
+/**
+ * What happened to an offer from the sender's side, worded per the receiver's k-ID policy:
+ * delivered, held for their parent's review, or declined (e.g. blocked).
+ */
+export function deliveryOf(db: DB, offer: Offer): { text: string; tone: 'ok' | 'warn' | 'danger' } {
+  const to = db.users[offer.toId];
+  const parent = to.parentId ? db.users[to.parentId]?.name : undefined;
+  if (offer.status === 'declined') return { text: `${to.name} declined`, tone: 'danger' };
+  if (offer.status === 'accepted') return { text: 'Deal agreed', tone: 'ok' };
+  if (heldForParent(getPolicy(to)) && !(offer as DemoOffer).parentApproved)
+    return { text: `Held for ${parent ?? 'a parent'}'s review`, tone: 'warn' };
+  return { text: `Delivered to ${to.name}`, tone: 'ok' };
+}
 
 export const FLAG: Record<string, string> = { US: '🇺🇸', DE: '🇩🇪', GB: '🇬🇧', KR: '🇰🇷' };

@@ -27,6 +27,8 @@ function alertAsk(reasons: string[], pronoun: string): string {
 export const COPY = {
   market: {
     aiPriced: 'Priced by AI',
+    requested: '✓ Requested',
+    countered: 'Countered',
     parentChecks: 'A grown-up checks every trade',
     parentChecksBody: 'Your parent sees each trade before it happens.',
     guardianOptIn: 'Trading needs a one-time OK in k-ID',
@@ -47,6 +49,13 @@ export const COPY = {
     newOffer: (sender: string, card: string) => `New offer from ${sender} on your ${card}`,
   },
 
+  sent: {
+    title: (n: number) => (n > 1 ? `✓ ${n} offers sent` : '✓ Offer sent'),
+    checked: 'Kardza Intelligence checked it before delivery.',
+    flagged: "Kardza Intelligence flagged your voice note: sharing contact info isn't allowed (−5 credibility).",
+    you: '✓ Sent',
+  },
+
   notify: {
     voice: (sender: string, kind: 'text' | 'voice') => `New ${kind === 'voice' ? 'voice note' : 'message'} from ${sender}`,
     counter: (who: string, amount: number) => `${who} countered at ${usd(amount)}`,
@@ -54,6 +63,7 @@ export const COPY = {
     alert: (child: string) => `Safety alert about ${child}`,
     tradeAsk: (child: string) => `${child} wants to accept a trade`,
     owned: (product: string) => `You got the ${product}`,
+    released: (sender: string) => `Your parent let ${sender}'s offer through. Be careful.`,
     enable: 'Phone notifications',
   },
 
@@ -132,6 +142,7 @@ export const COPY = {
 
   deal: {
     counter: 'Counter',
+    reply: 'Reply',
     counterAt: (amount: number) => `Counter at ${usd(amount)}`,
     waiting: (amount: number, who: string) => `You countered at ${usd(amount)}. Waiting for ${who}.`,
     accept: 'Accept',
@@ -154,5 +165,7 @@ export const COPY = {
     shortcut: 'Demo shortcut',
     sending: 'Sending…',
     hint: 'Every phone is live. ··· in any phone: Reset demo, country, Demo shortcut.',
+    tagline: 'One marketplace for every age · rules from k-ID',
+    live: 'Live · all phones in sync',
   },
 };

@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { useState } from 'react';
 import { View } from 'react-native';
 
 import { Btn, Eyebrow, Note, Rule, Txt } from '@/components/ui';
@@ -6,7 +7,7 @@ import { Credibility } from '@/components/Credibility';
 import { WhyChip } from '@/components/WhyChip';
 import { act } from '@/lib/api';
 import { COPY } from '@/lib/copy';
-import { analysisOf, blockedOf, cashOf, credibilityOf, type DemoOffer, heldForParent, RISK_LABEL } from '@/lib/demo';
+import { analysisOf, blockedOf, cashOf, credibilityOf, deliveryOf, type DemoOffer, heldForParent, RISK_LABEL } from '@/lib/demo';
 import { getPolicy } from '@/lib/policy';
 import { C } from '@/lib/theme';
 import type { DB, Offer, PersonaId } from '@/lib/types';
@@ -24,6 +25,7 @@ const STATUS_LABEL: Partial<Record<string, string>> = {
 const value = (db: DB, ids: string[]) => ids.reduce((s, id) => s + (db.cards.find((c) => c.id === id)?.priceUsd ?? 0), 0);
 
 export function OfferThread({ db, offer, me }: { db: DB; offer: Offer; me: PersonaId }) {
+  const [replying, setReplying] = useState(false);
   // Parents approve trades but never read the kids' conversation.
   const policy = getPolicy(db.users[me]);
   const listing = db.listings.find((l) => l.id === offer.listingId);
@@ -100,12 +102,20 @@ export function OfferThread({ db, offer, me }: { db: DB; offer: Offer; me: Perso
           viewer={me}
           viewerName={db.users[me].name}
           released={released}
+          delivery={role === 'sender' ? deliveryOf(db, offer).text : undefined}
           policy={policy}
           from={db.users[m.fromId]}
         />
       ))}
 
-      {offer.status === 'pending' && role !== 'parent' ? <Composer offerId={offer.id} me={me} policy={policy} /> : null}
+      {/* Reply tools stay folded so the thread reads cleanly; one tap opens them. */}
+      {offer.status === 'pending' && role !== 'parent' ? (
+        replying ? (
+          <Composer offerId={offer.id} me={me} policy={policy} />
+        ) : (
+          <Btn label={COPY.deal.reply} kind="quiet" onPress={() => setReplying(true)} style={{ alignSelf: 'flex-start' }} />
+        )
+      ) : null}
 
       <OfferActions
         offer={offer as DemoOffer}
@@ -115,7 +125,8 @@ export function OfferThread({ db, offer, me }: { db: DB; offer: Offer; me: Perso
         otherName={other.name}
         needsParent={policy.tradeNeedsParent && !!db.users[me].parentId}
       />
-      {offer.status === 'needs-parent' ? (
+      {/* The sender already sees 'Held for … review' under their message. */}
+      {offer.status === 'needs-parent' && role !== 'sender' ? (
         <Note title="Waiting for a parent">A grown-up checks this trade before any cards move.</Note>
       ) : null}
       {offer.status === 'accepted' ? <Note tone="ok" title={COPY.deal.agreed}>{COPY.deal.agreedBody}</Note> : null}

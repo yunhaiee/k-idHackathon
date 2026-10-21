@@ -1,4 +1,5 @@
-import { View } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
+import { Platform, View } from 'react-native';
 
 import { Btn, Eyebrow, Note, Txt } from '@/components/ui';
 import type { useCheckout } from '@/lib/checkout';
@@ -24,6 +25,17 @@ export function CheckoutSheet({ checkout }: { checkout: ReturnType<typeof useChe
           ? "FastSpring's API isn't reachable yet, so this stands in for its checkout. Test card 4242 4242 4242 4242."
           : 'Finish paying in the FastSpring window with test card 4242 4242 4242 4242, then confirm here.'}
       </Txt>
+      {/* Always offer the link: a direct tap opens it even where the automatic pop-up was blocked (/demo frames). */}
+      {p.via === 'fastspring' && p.url ? (
+        <Btn
+          label={p.blocked ? 'Open FastSpring checkout' : 'Reopen FastSpring checkout'}
+          kind={p.blocked ? 'primary' : 'quiet'}
+          onPress={() => {
+            if (Platform.OS === 'web') window.open(p.url, '_blank');
+            else void WebBrowser.openBrowserAsync(p.url!);
+          }}
+        />
+      ) : null}
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <Btn label={p.via === 'simulated' ? 'Pay (test)' : 'I finished checkout'} onPress={checkout.confirm} style={{ flex: 1 }} />
         <Btn label="Cancel" kind="quiet" onPress={checkout.cancel} style={{ flex: 1 }} />
