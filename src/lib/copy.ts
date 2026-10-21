@@ -39,6 +39,11 @@ export const COPY = {
     alsoSimilar: (n: number, card: string) => `Also send to ${n} similar ${card} listing${n === 1 ? '' : 's'}`,
     send: 'Send offer',
     sending: 'Sending offer…',
+    needAmount: 'Enter an amount or pick a card first.',
+    notSaved: 'the server did not return the new offer',
+    stepSave: "Couldn't save the offer",
+    stepVoice: "Couldn't send the voice note",
+    stepDeliver: "Couldn't refresh the inbox",
     newOffer: (sender: string, card: string) => `New offer from ${sender} on your ${card}`,
   },
 

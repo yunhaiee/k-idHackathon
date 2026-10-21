@@ -25,9 +25,9 @@ function fitScale(win: { width: number; height: number }, phones: number) {
   return Math.max(0.3, Math.min(1, across, down));
 }
 
-function label(db: DB, id: PersonaId) {
-  const u = db.users[id];
-  if (!u) return id;
+function label(db: DB | null, id: PersonaId) {
+  const u = db?.users[id];
+  if (!u) return id.charAt(0).toUpperCase() + id.slice(1);
   return `${u.name} · ${getPolicy(u).age} ${FLAG[u.country] ?? u.country}`;
 }
 
@@ -45,7 +45,7 @@ function Phone({ id, scale, hidden }: { id: PersonaId; scale: number; hidden?: b
         display: hidden ? 'none' : 'flex',
       }}>
       {createElement('iframe', {
-        src: `/?as=${id}`,
+        src: `/?persona=${id}`,
         title: id,
         allow: 'microphone; autoplay',
         // Absolute so the frame's flex layout can't shrink it before the scale is applied.
@@ -77,8 +77,7 @@ export default function Demo() {
         <Txt color={C.muted}>Open /demo in a laptop browser.</Txt>
       </Page>
     );
-  if (!db) return null;
-
+  // No wait on data here: the frames load on their own, so /demo never sits blank.
   const scale = fitScale(win, DEMO.phones.length);
 
   return (

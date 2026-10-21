@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 
 import { Price } from '@/components/Price';
@@ -11,6 +11,7 @@ import { Btn, Eyebrow, H, Note, Page, Rule, Txt } from '@/components/ui';
 import { act, refreshDB, useDB } from '@/lib/api';
 import { COPY } from '@/lib/copy';
 import { useDevice } from '@/lib/device';
+import { goBack } from '@/lib/nav';
 import { getPolicy } from '@/lib/policy';
 import { AI_PRICE_SOURCE } from '@/lib/seed';
 import { C, F } from '@/lib/theme';
@@ -27,6 +28,7 @@ export default function ListingScreen() {
   const [alsoSimilar, setAlsoSimilar] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const sending = useRef(false);
   if (!db) return null;
   const listing = db.listings.find((l) => l.id === id);
   if (!listing)
@@ -34,7 +36,7 @@ export default function ListingScreen() {
       <View style={{ flex: 1, backgroundColor: C.bg }}>
         <TopBar />
         <Page>
-          <Btn label="Back" kind="quiet" onPress={() => router.back()} style={{ alignSelf: 'flex-start' }} />
+          <Btn label="Back" kind="quiet" onPress={() => goBack()} style={{ alignSelf: 'flex-start' }} />
           <Txt color={C.muted}>This card was traded.</Txt>
         </Page>
       </View>
@@ -53,8 +55,16 @@ export default function ListingScreen() {
   );
 
   const send = async () => {
+    if (sending.current) return; // no double-send from a quick second tap
     setError(null);
+    if (!give) {
+      setError(COPY.offer.needAmount);
+      return;
+    }
+    sending.current = true;
     const targets = [listing, ...(alsoSimilar ? similar : [])];
+    // Each step names itself, so a failure says where it stopped instead of failing silently.
+    let step: string = COPY.offer.stepSave;
     try {
       setBusy(COPY.offer.sending);
       const offerIds: string[] = [];
@@ -64,18 +74,22 @@ export default function ListingScreen() {
           error?: string;
         };
         if (res.error) throw new Error(res.error);
-        const offer = res.offers.find((o) => o.listingId === l.id && o.fromId === persona);
-        if (offer) offerIds.push(offer.id);
+        const offer = res.offers?.find((o) => o.listingId === l.id && o.fromId === persona);
+        if (!offer) throw new Error(COPY.offer.notSaved);
+        offerIds.push(offer.id);
       }
       if (voice) {
+        step = COPY.offer.stepVoice;
         setBusy(COPY.voice.checking);
         await Promise.all(offerIds.map((offerId) => sendVoiceNote(offerId, persona, voice)));
-        await refreshDB();
       }
+      step = COPY.offer.stepDeliver;
+      await refreshDB();
       router.push('/inbox');
     } catch (e) {
-      setError(String((e as Error).message ?? e));
+      setError(`${step}: ${String((e as Error).message ?? e)}`);
     } finally {
+      sending.current = false;
       setBusy(null);
     }
   };
@@ -84,7 +98,8 @@ export default function ListingScreen() {
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       <TopBar />
       <Page>
-        <Btn label="Back" kind="quiet" onPress={() => router.back()} style={{ alignSelf: 'flex-start' }} />
+        {/* Back closes the offer form first, then leaves the listing. */}
+        <Btn label="Back" kind="quiet" onPress={() => (open ? setOpen(false) : goBack())} style={{ alignSelf: 'flex-start' }} />
         <Image source={card.image} style={{ width: '100%', height: 320 }} contentFit="contain" />
         <Eyebrow>
           {card.set} · {card.number}
@@ -192,7 +207,7 @@ export default function ListingScreen() {
               </Pressable>
             ) : null}
 
-            <Btn label={busy ?? COPY.offer.send} disabled={!give || !!busy} loading={false} onPress={send} big={policy.bigUI} />
+            <Btn label={busy ?? COPY.offer.send} disabled={!!busy} onPress={send} big={policy.bigUI} />
             {error ? <Note tone="danger" title={error} /> : null}
           </View>
         )}

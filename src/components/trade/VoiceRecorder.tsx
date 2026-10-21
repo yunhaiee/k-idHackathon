@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 
 import { Btn, Note, Txt } from '@/components/ui';
-import { apiUrl, postJSON } from '@/lib/api';
+import { apiUrl } from '@/lib/api';
 import { COPY } from '@/lib/copy';
 import { C } from '@/lib/theme';
 import type { PersonaId } from '@/lib/types';
@@ -15,19 +15,32 @@ export type VoiceNote = { kind: 'recording'; blob: Blob; url: string; seconds: n
 const MAX_SECONDS = 15;
 const BARS = 40;
 
-/** Upload a voice note for one offer; the server runs Modulate on it. */
+/** Upload a voice note for one offer; the server runs Modulate on it. Throws with the server's reason on failure. */
 export async function sendVoiceNote(offerId: string, fromId: PersonaId, voice: VoiceNote) {
-  if (voice.kind === 'sample') return postJSON('/api/voice', { offerId, fromId });
-  const fd = new FormData();
-  fd.append('offerId', offerId);
-  fd.append('fromId', fromId);
-  fd.append('file', voice.blob, voice.blob.type.includes('mp4') ? 'voice.mp4' : 'voice.webm');
-  return fetch(apiUrl('/api/voice'), { method: 'POST', body: fd });
+  let res: Response;
+  if (voice.kind === 'sample') {
+    res = await fetch(apiUrl('/api/voice'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ offerId, fromId }),
+    });
+  } else {
+    const fd = new FormData();
+    fd.append('offerId', offerId);
+    fd.append('fromId', fromId);
+    fd.append('file', voice.blob, voice.blob.type.includes('mp4') ? 'voice.mp4' : 'voice.webm');
+    res = await fetch(apiUrl('/api/voice'), { method: 'POST', body: fd });
+  }
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`${res.status} ${body.replace(/<[^>]+>/g, ' ').trim().slice(0, 140) || res.statusText}`);
+  }
 }
 
 function pickMime() {
   if (typeof MediaRecorder === 'undefined') return undefined;
-  return ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find((m) => MediaRecorder.isTypeSupported(m));
+  // mp4 first: it's the format Modulate is known to accept (Safari, recent Chrome). webm/opus is the fallback.
+  return ['audio/mp4', 'audio/mp4;codecs=mp4a.40.2', 'audio/webm;codecs=opus', 'audio/webm'].find((m) => MediaRecorder.isTypeSupported(m));
 }
 
 const fmt = (s: number) => `0:${String(Math.floor(s)).padStart(2, '0')}`;
