@@ -1,6 +1,26 @@
 # Handoff: Kardza (Yunha's integrations session)
 
-Paste the block below into a new Claude Code session opened in `~/dev/k-idHackathon`.
+## Step 0 (do this before/while switching sessions): move the demo server out of Claude
+
+The demo server was started inside the old Claude session (its built-in browser pane), so it stops when
+that session ends. Move it to the normal macOS Terminal app so it no longer depends on any Claude session:
+
+1. **Old session:** ask it to stop the server ("stop the preview server"), or just close that session.
+2. **Check nothing is still using the port** (in Terminal):
+   ```bash
+   lsof -nP -iTCP:8082 -sTCP:LISTEN
+   ```
+   It should print nothing. Never run two servers on 8082.
+3. **Start the server in macOS Terminal** (leave this window open all day):
+   ```bash
+   cd ~/dev/k-idHackathon && npx expo start --tunnel --port 8082
+   ```
+4. **Check the tunnel URL** it prints. It should still be `https://c-yunhaiee-etcpa2-mvifhw22s8xpmnaa.on.expo.app`.
+   If it changed: add the new URL in Kai (portal.k-id.com → Kardza → test key → Origins) and open the new
+   link on every demo phone. Data and k-ID sessions live in `data/db.json`, so nothing else is lost.
+5. Keep the laptop plugged in and awake.
+
+Then paste the block below into a new Claude Code session opened in `~/dev/k-idHackathon`.
 
 ```
 You're continuing work on Kardza, our hackathon project at Build for Everyone (Google x k-ID), Commerce &
@@ -28,8 +48,10 @@ DEMO RULES: the demo ALWAYS runs on my laptop: `npx expo start --tunnel --port 8
 https://c-yunhaiee-etcpa2-mvifhw22s8xpmnaa.on.expo.app (personas: ?as=maya|leo|anna|devon; side-by-side
 /demo). Don't restart the server unless broken: the tunnel URL could change and would need adding to k-ID
 (Kai portal → test key → Origins; localhost:8082 and the on.expo.app URL are already there). If the server
-isn't running, start it in a terminal (it needs `npx expo login` as yunhaiee, already done) and check the
-URL is unchanged. Keep the repo on branch main (GitHub Desktop once switched it to oliver-demo by
+isn't running, it was probably still tied to the old Claude session: follow "Step 0" at the top of
+HANDOFF.md (start it in the macOS Terminal app, NOT inside Claude, so it survives session changes; it needs
+`npx expo login` as yunhaiee, already done) and check the URL is unchanged. Never start a second server on
+8082 if one is already listening (check with `lsof -nP -iTCP:8082 -sTCP:LISTEN`). Keep the repo on branch main (GitHub Desktop once switched it to oliver-demo by
 accident). Code freeze 3:45.
 
 PARTNER TOOLS (all real, verified):
@@ -74,9 +96,12 @@ STILL OPEN (as of 1:00 PM):
    FastSpring; Other: Claude (Anthropic), Pokémon TCG API, Expo/React web. Not Inworld, not Google Cloud
    hosting) + judge Q&A answers (see PARTNER_GUIDE.md §13).
 4. Rehearse /demo with Oliver ~1:30–2:30 and fix server-side bugs; backup screen recording at 2:30.
-5. Optional: FastSpring checkout branding (dashboard; logo in assets/brand/), Velma line in Anna's alert UI
+5. Optional: FastSpring checkout branding (dashboard → Checkouts → WEB Checkouts → Settings, not Popup;
+   logo assets/brand/kardza-checkout-logo.png; header #0A0A0F, buttons #6C5CE7 / hover #9D7BF0, radius 14px),
+   Velma line in Anna's alert UI
    (Oliver's file), Vercel + Upstash deploy for a laptop-free link.
 
-Start by: `git status` + `git pull`, confirm the dev server responds on localhost:8082 and the tunnel URL,
+Start by: `git status` + `git pull`, confirm the dev server responds on localhost:8082 (curl
+localhost:8082/api/state) and on the tunnel URL; if it's not running, walk me through Step 0,
 then tell me in 3 lines where things stand and do item 2 (README).
 ```
