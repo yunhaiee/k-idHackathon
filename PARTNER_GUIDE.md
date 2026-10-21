@@ -28,6 +28,16 @@ If the UI needs new data or a new server action, ask the integrations team in ch
 
 **Git rules:** `git pull` before you start; commit small; push after each fix; post a one-line note in chat. **Never commit `.env` or `vendor/`.**
 
+## 2b. Rule: the demo always runs on Yunha's laptop
+
+- **Only Yunha's laptop runs the demo server.** It serves the app and the shared state (offers, messages, alerts, k-ID sessions) through Expo's tunnel: `https://c-yunhaiee-etcpa2-mvifhw22s8xpmnaa.on.expo.app`.
+- **Every demo device opens that URL:** Maya's phone, Jordan's phone, and Mom (laptop browser or phone). Nobody demos from their own local server, because its data is separate and the other devices won't see it.
+- **Your laptop is for building only** (`http://localhost:8082`). Your changes reach the demo like this: you push, tell Yunha, her Claude pulls, and her running server reloads on its own (same URL, no restart).
+- **Don't restart Yunha's server** unless something is broken. A restart can change the tunnel URL, and the new URL would then have to be added to k-ID's allowed origins.
+- **Don't edit the demo data by hand.** Use the app's own controls ("···" → Reset demo resets Maya only).
+- **Yunha's laptop on demo day:** plugged in, never sleeping, with a phone hotspot as backup Wi-Fi.
+- **Code freeze:** last UI push by **3:45**. After that, demo-breaking fixes only, agreed in chat.
+
 ## 3. Setup (about 5 minutes)
 
 1. Clone:
@@ -53,7 +63,7 @@ If the UI needs new data or a new server action, ask the integrations team in ch
 
 Notes:
 - **Port must be 8082.** k-ID only answers allowed origins, and `http://localhost:8082` is on the list. Another port gives "Origin not allowed for this publishable key".
-- Your local data (`data/db.json`) is separate from Yunha's. The real demo runs on **Yunha's laptop**: when you push, she pulls, and her server reloads with your changes.
+- Your local data (`data/db.json`) is separate from Yunha's. The demo always runs on **Yunha's laptop** (see 2b).
 - In your local copy every persona must pass k-ID once. Jordan and Mom pass instantly. Maya needs a parent email; on your laptop you can tap **"k-ID unreachable? Use simulated rules"** to skip it while building UI (it's clearly labeled "Simulated k-ID rules").
 
 ## 4. Stack (what it is and isn't)
