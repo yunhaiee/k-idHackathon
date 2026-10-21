@@ -78,7 +78,12 @@ export type Message = {
   redacted?: string;
   risk?: Risk;
   audioUrl?: string;
-  source?: string;
+  /** Modulate signals (voice only). */
+  deepfake?: number;
+  emotions?: string[];
+  behaviors?: { name: string; confidence: number; reasoning?: string }[];
+  /** Which services checked it, for the UI ("Modulate", "Claude", "rules", "simulated"). */
+  checkedBy?: string[];
   createdAt: number;
 };
 
@@ -87,6 +92,8 @@ export type Alert = {
   parentId: PersonaId;
   childId: PersonaId;
   reason: string;
+  messageId?: string;
+  offerId?: string;
   createdAt: number;
   read?: boolean;
 };

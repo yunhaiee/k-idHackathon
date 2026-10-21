@@ -7,6 +7,18 @@
       "runtimeArgs": [
         "expo",
         "start",
+        "--port",
+        "8082"
+      ],
+      "port": 8082,
+      "autoPort": false
+    },
+    {
+      "name": "kardza-tunnel",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "expo",
+        "start",
         "--tunnel",
         "ngrok",
         "--port",

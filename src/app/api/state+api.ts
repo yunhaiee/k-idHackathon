@@ -1,6 +1,7 @@
 import { seedDB } from '@/lib/seed';
 import type { Country, KidRecord, PersonaId } from '@/lib/types';
 import { mutate, readDB, uid, writeDB } from '@/server/db';
+import { createOffer, parentDecision, respondOffer } from '@/server/trade';
 
 export function GET(request: Request) {
   const since = Number(new URL(request.url).searchParams.get('v') ?? 0);
@@ -18,10 +19,22 @@ type Action =
       action: 'listScanned';
       persona: PersonaId;
       card: { name: string; set: string; number: string; priceUsd: number; image: string };
-    };
+    }
+  | { action: 'createOffer'; listingId: string; fromId: PersonaId; offeredCardIds: string[] }
+  | { action: 'respondOffer'; offerId: string; by: PersonaId; accept: boolean }
+  | { action: 'parentDecision'; requestId: string; approve: boolean }
+  | { action: 'readAlert'; alertId: string };
 
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<Response> {
   const body = (await request.json()) as Action;
+  try {
+    return handle(body);
+  } catch (e) {
+    return Response.json({ error: String((e as Error).message ?? e) }, { status: 400 });
+  }
+}
+
+function handle(body: Action): Response {
   switch (body.action) {
     case 'reset': {
       const db = seedDB();
@@ -47,6 +60,19 @@ export async function POST(request: Request) {
           const id = uid('c');
           db.cards.push({ id, ownerId: body.persona, ...body.card });
           db.listings.unshift({ id: uid('l'), cardId: id, sellerId: body.persona, createdAt: Date.now() });
+        }),
+      );
+    case 'createOffer':
+      return Response.json(mutate((db) => void createOffer(db, body.listingId, body.fromId, body.offeredCardIds)));
+    case 'respondOffer':
+      return Response.json(mutate((db) => respondOffer(db, body.offerId, body.by, body.accept)));
+    case 'parentDecision':
+      return Response.json(mutate((db) => parentDecision(db, body.requestId, body.approve)));
+    case 'readAlert':
+      return Response.json(
+        mutate((db) => {
+          const a = db.alerts.find((x) => x.id === body.alertId);
+          if (a) a.read = true;
         }),
       );
     case 'kidForget':

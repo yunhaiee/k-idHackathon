@@ -17,9 +17,10 @@ const SCHEMA = {
 };
 
 const PROMPT = `You are a trading-card grader's assistant. Identify the card in the photo.
-Return its name, set, collector number, a realistic USD market price for an ungraded near-mint copy,
-and fakeRisk (low/medium/high) with 1-3 short reasons based on what you can see (print quality, font,
-holo pattern, color, edges). You cannot prove authenticity from a photo; only flag what looks off.`;
+Return its name, set, collector number, and a realistic USD market price for an ungraded near-mint copy.
+Assume the common Unlimited print unless a 1st Edition stamp is clearly visible.
+fakeRisk is low/medium/high based only on what you can see (print quality, fonts, holo pattern, color, edges).
+reasons: 1-2 plain sentences of at most 15 words each. A photo can't prove authenticity, so only flag what looks off.`;
 
 const SIMULATED: ScanResult = {
   name: 'Mewtwo',
