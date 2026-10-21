@@ -60,6 +60,12 @@ export const COPY = {
     newOffer: (sender: string, card: string) => `New offer from ${sender} on your ${card}`,
   },
 
+  thread: {
+    show: (kind: 'text' | 'voice') => (kind === 'voice' ? 'Show voice note' : 'Show message'),
+    hide: 'Hide',
+    flagged: 'Flagged',
+  },
+
   sent: {
     title: (n: number) => (n > 1 ? `${n} offers sent` : 'Offer sent'),
     dismiss: 'Dismiss',

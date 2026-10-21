@@ -1,12 +1,13 @@
 import { useAudioPlayer } from 'expo-audio';
 import { router } from 'expo-router';
+import { useState, type ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { Btn, Eyebrow, Note, Txt } from '@/components/ui';
 import { WhyChip } from '@/components/WhyChip';
 import { apiUrl } from '@/lib/api';
 import { COPY } from '@/lib/copy';
-import { CREDIBILITY_HIT, type Policy } from '@/lib/policy';
+import type { Policy } from '@/lib/policy';
 import { C } from '@/lib/theme';
 import type { Message, PersonaId, User } from '@/lib/types';
 
@@ -36,6 +37,21 @@ function Play({ url }: { url: string }) {
         {COPY.voice.play}
       </Txt>
     </Pressable>
+  );
+}
+
+/** The message itself (play, transcript, checks) folded under one line, so a flagged thread stays readable. */
+function Fold({ label, align, children }: { label: string; align?: 'flex-end'; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <View style={{ gap: 6, alignItems: align }}>
+      <Pressable onPress={() => setOpen((o) => !o)} hitSlop={8}>
+        <Txt size={13} weight="semi" color={C.muted}>
+          {open ? `${COPY.thread.hide} ▴` : `${label} ▾`}
+        </Txt>
+      </Pressable>
+      {open ? children : null}
+    </View>
   );
 }
 
@@ -69,17 +85,18 @@ export function MessageView({
   if (mine)
     return (
       <View style={{ gap: 6, alignSelf: 'flex-end', maxWidth: '88%' }}>
-        <View style={{ borderRightWidth: 2, borderRightColor: C.line, paddingRight: 12, paddingVertical: 4, gap: 6, alignItems: 'flex-end' }}>
+        <View style={{ borderRightWidth: 2, borderRightColor: risky ? C.danger : C.line, paddingRight: 12, paddingVertical: 4, gap: 6, alignItems: 'flex-end' }}>
           <Eyebrow>{label}</Eyebrow>
-          {msg.audioUrl ? <Play url={msg.audioUrl} /> : null}
-          <Txt size={14} color={msg.kind === 'voice' ? C.muted : C.text} style={{ textAlign: 'right' }}>
-            {body}
+          <Txt size={12} color={risky ? C.danger : C.success}>
+            {[risky ? COPY.thread.flagged : COPY.sent.you, delivery].filter(Boolean).join(' · ')}
           </Txt>
+          <Fold label={COPY.thread.show(msg.kind)} align="flex-end">
+            {msg.audioUrl ? <Play url={msg.audioUrl} /> : null}
+            <Txt size={14} color={C.muted} style={{ textAlign: 'right' }}>
+              {body}
+            </Txt>
+          </Fold>
         </View>
-        <Txt size={12} color={risky ? C.danger : C.success} style={{ alignSelf: 'flex-end' }}>
-          {[COPY.sent.you, delivery].filter(Boolean).join(' · ')}
-        </Txt>
-        {risky ? <Note tone="danger" title={COPY.sender.flagged(CREDIBILITY_HIT)} /> : null}
       </View>
     );
 
@@ -105,16 +122,32 @@ export function MessageView({
       <View style={{ gap: 6 }}>
         <Eyebrow>{label}</Eyebrow>
         <Note tone="danger" title={COPY.voice.scamBanner} />
-        {msg.audioUrl && canPlay ? <Play url={msg.audioUrl} /> : null}
-        {text ? <Txt color={C.muted}>{isVoice ? text : hideContact(text)}</Txt> : null}
-        {isVoice && !canPlay ? (
-          <View style={{ gap: 6 }}>
-            <Txt size={12} color={C.muted}>
-              {COPY.voice.offHint}
+        <Fold label={COPY.thread.show(msg.kind)}>
+          {msg.audioUrl && canPlay ? <Play url={msg.audioUrl} /> : null}
+          {text ? <Txt color={C.muted}>{isVoice ? text : hideContact(text)}</Txt> : null}
+          {isVoice && !canPlay ? (
+            <View style={{ gap: 6 }}>
+              <Txt size={12} color={C.muted}>
+                {COPY.voice.offHint}
+              </Txt>
+              <Btn label={COPY.voice.turnOn} kind="quiet" onPress={() => router.push('/settings')} />
+            </View>
+          ) : null}
+          {checked ? (
+            <Txt size={11} color={C.muted}>
+              {checked}
             </Txt>
-            <Btn label={COPY.voice.turnOn} kind="quiet" onPress={() => router.push('/settings')} />
-          </View>
-        ) : null}
+          ) : null}
+        </Fold>
+      </View>
+    );
+
+  if (!risky)
+    return (
+      <View style={{ gap: 6 }}>
+        <Eyebrow>{label}</Eyebrow>
+        {msg.audioUrl ? <Play url={msg.audioUrl} /> : null}
+        <Txt>{text}</Txt>
         {checked ? (
           <Txt size={11} color={C.muted}>
             {checked}
@@ -123,36 +156,38 @@ export function MessageView({
       </View>
     );
 
+  // Adult: the verdict up front, the message and Modulate's evidence one tap away.
   return (
     <View style={{ gap: 6 }}>
       <Eyebrow>{label}</Eyebrow>
-      {msg.audioUrl && !risky ? <Play url={msg.audioUrl} /> : null}
-      {msg.audioUrl && risky && showFull ? <Play url={msg.audioUrl} /> : null}
-      <Txt>{text}</Txt>
-      {risky && showFull ? (
+      {showFull ? (
         <Note tone="danger" title="Scam warning">
-          {`Asking to move off Kardza is a common scam. ${msg.risk!.reasons.join(' · ')}`}
+          {msg.risk!.reasons.join(' · ')}
         </Note>
-      ) : risky ? (
+      ) : (
         <Note tone="warn" title="Careful">
           {`We hid personal details. ${msg.risk!.reasons.join(' · ')}`}
         </Note>
-      ) : null}
-      {showFull && msg.behaviors?.length ? (
-        <Txt size={12} color={C.muted}>
-          {`Modulate Velma: ${msg.behaviors.map((b) => `${b.name} ${Math.round(b.confidence * 100)}%`).join(', ')}`}
-        </Txt>
-      ) : null}
-      {showFull && msg.deepfake != null ? (
-        <Txt size={12} color={msg.deepfake > 0.85 ? C.warning : C.muted}>
-          {`Synthetic-voice score ${Math.round(msg.deepfake * 100)}%${msg.emotions?.length ? ` · tone: ${msg.emotions.join(', ')}` : ''}`}
-        </Txt>
-      ) : null}
-      {checked ? (
-        <Txt size={11} color={C.muted}>
-          {checked}
-        </Txt>
-      ) : null}
+      )}
+      <Fold label={COPY.thread.show(msg.kind)}>
+        {msg.audioUrl && showFull ? <Play url={msg.audioUrl} /> : null}
+        <Txt>{text}</Txt>
+        {showFull && msg.behaviors?.length ? (
+          <Txt size={12} color={C.muted}>
+            {`Modulate Velma: ${msg.behaviors.map((b) => `${b.name} ${Math.round(b.confidence * 100)}%`).join(', ')}`}
+          </Txt>
+        ) : null}
+        {showFull && msg.deepfake != null ? (
+          <Txt size={12} color={msg.deepfake > 0.85 ? C.warning : C.muted}>
+            {`Synthetic-voice score ${Math.round(msg.deepfake * 100)}%${msg.emotions?.length ? ` · tone: ${msg.emotions.join(', ')}` : ''}`}
+          </Txt>
+        ) : null}
+        {checked ? (
+          <Txt size={11} color={C.muted}>
+            {checked}
+          </Txt>
+        ) : null}
+      </Fold>
     </View>
   );
 }
