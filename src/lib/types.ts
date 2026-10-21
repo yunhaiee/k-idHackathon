@@ -52,6 +52,8 @@ export type Card = {
   priceUsd: number;
   image: string;
   ownerId: PersonaId;
+  /** e.g. "TCGplayer market · Base · updated 2026/10/15"; absent = seed estimate. */
+  priceSource?: string;
 };
 
 export type Listing = { id: string; cardId: string; sellerId: PersonaId; createdAt: number };
@@ -114,6 +116,8 @@ export type Purchase = {
   userId: PersonaId;
   productId: string;
   via: 'fastspring' | 'simulated';
+  /** FastSpring order id, when the server verified the order with FastSpring. */
+  orderId?: string;
   createdAt: number;
 };
 
@@ -127,6 +131,8 @@ export type DB = {
   alerts: Alert[];
   requests: ParentRequest[];
   purchases: Purchase[];
+  /** Last good real market prices by "name|number", reused when the price API is down. */
+  priceCache?: Record<string, { usd: number; source: string }>;
 };
 
 export type Product = {

@@ -1,4 +1,8 @@
 /// <reference types="node" />
+import type { DB } from '@/lib/types';
+
+import { mutate, readDB } from './db';
+
 // Real market prices: TCGplayer data via the free Pokémon TCG API. Best effort (it rate-limits without a key),
 // so callers keep the AI estimate when this returns null.
 type Prices = Record<string, { market?: number | null; mid?: number | null }>;
@@ -44,3 +48,44 @@ export async function marketPrice(
   }
   return null;
 }
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Look up real prices for every card (2 tries each, one at a time to stay under the API's rate limit). */
+export async function lookupCardPrices(cards: { name: string; number: string; set: string }[]) {
+  const found: Record<string, { usd: number; source: string }> = {};
+  for (const c of cards) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const m = await marketPrice(c.name, c.number, c.set);
+      if (m) {
+        found[`${c.name}|${c.number}`] = {
+          usd: Math.round(m.usd * 100) / 100,
+          source: `TCGplayer market · ${m.set ?? c.set}${m.updatedAt ? ` · updated ${m.updatedAt}` : ''}`,
+        };
+        break;
+      }
+      await sleep(800);
+    }
+  }
+  return found;
+}
+
+// Fresh results update the cache; cards the API misses keep their last good real price, else the seed estimate.
+export function applyPrices(db: DB, fresh: Record<string, { usd: number; source: string }> = {}) {
+  db.priceCache = { ...(db.priceCache ?? {}), ...fresh };
+  for (const card of db.cards) {
+    const hit = db.priceCache[`${card.name}|${card.number}`];
+    if (hit) {
+      card.priceUsd = hit.usd;
+      card.priceSource = hit.source;
+    }
+  }
+}
+
+export async function refreshPrices() {
+  const db = await readDB();
+  const fresh = await lookupCardPrices(db.cards);
+  const updated = await mutate((d) => applyPrices(d, fresh));
+  return { found: Object.keys(fresh).length, of: updated.cards.length };
+}
+
