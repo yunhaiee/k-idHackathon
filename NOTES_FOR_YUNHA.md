@@ -1,5 +1,22 @@
 # Notes for Yunha (from Oliver, branch `oliver-demo`)
 
+> **Update: branch `oliver-server` implements the ⛔ server pieces.** It's off `oliver-demo`, for you to review and merge.
+> Files: `src/lib/types.ts`, `src/server/trade.ts`, `src/app/api/state+api.ts`, `voice+api.ts`, `message+api.ts`, `src/server/prices.ts`, `src/server/fastspring.ts` (buyer contacts).
+>
+> | Piece | Where | Tested |
+> |---|---|---|
+> | Cash on offers (`cashUsd`), counted in fairness | `createOffer`, `offerValues` | ✅ $20 stored and shown |
+> | Hold for parent: offers to a child under the consent age with a parent start **`held`** | `createOffer` | ✅ Leo gets nothing, Anna gets the alert |
+> | `parentReviewOffer` (**Let Leo see it** / decline); the child's accept still needs the parent's final OK | `trade.ts`, `state+api.ts` | ✅ |
+> | `block` (declines open offers; new offers, voice notes and messages from the blocked sender get 403) | `trade.ts`, routes | ✅ |
+> | Credibility −5 once per blocked burst ("send to both" = one hit) | `deliverMessage` | ✅ 62 → 57 |
+> | `counterOffer` + the sender accepting a counter → "Deal agreed." at the counter price | `trade.ts`, `state+api.ts` | ✅ $65 |
+> | Price refresh skips `priceSource: 'AI estimate'` | `prices.ts` | ✅ Charizards stay $70 |
+> | `PersonaId` = maya / leo / anna / devon; FastSpring buyer contacts for them | `types.ts`, `fastspring.ts` | ✅ typecheck |
+>
+> Behaviour change to check: the old "unfair offer" alert for kids is gone (the held offer goes to the parent instead).
+> **Still yours, not on that branch:** R2 (8s Modulate cap + Gemini transcript fallback), R3 `analyzeOffer()`, R7a `policy.ts` split, R7b Leo's real DE k-ID approval, $4.99 in FastSpring, and the Maya guardian-managed trading decision (R6).
+
 New demo: **Maya 14 🇺🇸 · Leo 14 🇩🇪 · Anna (Leo's mom) · Devon 25 🇺🇸**, shown side by side at **`/demo`**.
 I only touched UI, copy, seed and M5 files. Everything below that needs your files is written as the exact change.
 
