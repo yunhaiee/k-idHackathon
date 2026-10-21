@@ -228,7 +228,7 @@ All server changes above are in `main` and tested end to end on the demo laptop:
 - **3. Block:** action `block {by, childId, blockedId}`; declines open offers from them; `createOffer` throws "This player blocked you"; `deliverMessage` drops their messages.
 - **4. Credibility:** −5 on a high-risk message, once per one-minute burst → "send to both" gives **62 → 57**.
 - **5. Counter:** action `counterOffer {offerId, by, cashUsd}` → `countered`; the original sender `respondOffer {accept:true}` → `accepted` with `cashUsd = counterUsd` ("Deal agreed."). **Add the "Counter at $65" (Maya) and "Accept" (Devon) controls in `OfferThread.tsx`.**
-- **6. FastSpring:** `holo-binder-theme` is $4.99 in FastSpring now. Checkout opens FastSpring's real test checkout; test card payments are blocked by the sandbox ("Not supported while in testing mode"), waiting on Adam.
+- **6. FastSpring:** `holo-binder-theme` is $4.99 in FastSpring now. **Working end to end (12:50):** real session checkout → test card 4242 + the store's test CVC → server verifies the completed order (KARDZAA261021-3561-14127). The "Not supported while in testing mode" error was a wrong CVC.
 - **7. Declare:** `/privacy` + `/terms` are sent to k-ID automatically from `window.location.origin` when the page is https (the tunnel), left out on http localhost.
 - **8. device.tsx:** stored persona ids that aren't in `PERSONA_ORDER` fall back to Maya (no more crash).
 
