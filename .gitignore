@@ -5,7 +5,7 @@ web-build/
 .env
 .env.*
 !.env.example
-data/db.json
+data/
 *.tgz
 .DS_Store
 ios/
