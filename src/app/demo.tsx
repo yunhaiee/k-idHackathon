@@ -5,6 +5,7 @@ import { createElement, useState } from 'react';
 import { Platform, Pressable, useWindowDimensions, View } from 'react-native';
 
 import { H, Page, Txt } from '@/components/ui';
+import { Wordmark } from '@/components/Wordmark';
 import { act, useDB } from '@/lib/api';
 import { COPY } from '@/lib/copy';
 import { FLAG } from '@/lib/demo';
@@ -201,9 +202,7 @@ export default function Demo() {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           {createElement('img', { src: '/icon-192.png', alt: '', style: { width: 36, height: 36, borderRadius: 9 } })}
           <View>
-            <Txt weight="display" size={20} style={{ letterSpacing: -0.4 }}>
-              Kardza
-            </Txt>
+            <Wordmark size={22} />
             <Txt size={12} color={C.muted}>
               {COPY.demo.tagline}
             </Txt>

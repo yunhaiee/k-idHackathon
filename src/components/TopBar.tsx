@@ -13,6 +13,7 @@ import { PERSONA_ORDER } from '@/lib/seed';
 import type { Country } from '@/lib/types';
 
 import { Btn, Chip, Eyebrow, Rule, Txt } from './ui';
+import { Wordmark } from './Wordmark';
 
 const COUNTRIES: Country[] = ['US', 'DE', 'GB', 'KR'];
 
@@ -43,9 +44,7 @@ export function TopBar() {
   return (
     <View style={[styles.wrap, { paddingTop: insets.top + 6 }]}>
       <View style={styles.row}>
-        <Txt weight="display" size={20} style={{ letterSpacing: -0.5 }}>
-          Kardza
-        </Txt>
+        <Wordmark size={22} />
         <View style={{ flexDirection: 'row', gap: 2 }}>
           {personas.map((p) => (
             <Chip
