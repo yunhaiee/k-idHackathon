@@ -20,6 +20,7 @@ export type KidRequirements = {
 export type KidRecord = {
   sessionId?: string;
   challengeId?: string;
+  settingsChallengeId?: string;
   status?: KidStatus;
   age?: number;
   ageStatus?: string;
@@ -27,7 +28,7 @@ export type KidRecord = {
   permissions?: KidPerm[];
   requirements?: KidRequirements;
   /** 'claim' = redeemed server-side with the secret key; 'client' = reported by the SDK in the browser. */
-  source?: 'claim' | 'client';
+  source?: 'claim' | 'client' | 'simulated';
   claimedAt?: number;
   updatedAt: number;
 };
@@ -127,4 +128,15 @@ export type Product = {
   priceUsd: number;
   subscription?: boolean;
   blurb: string;
+};
+
+export type ScanResult = {
+  name: string;
+  set: string;
+  number: string;
+  estimatedPriceUsd: number;
+  fakeRisk: 'low' | 'medium' | 'high';
+  reasons: string[];
+  model?: string;
+  simulated?: boolean;
 };

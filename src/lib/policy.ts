@@ -31,8 +31,16 @@ export const PERM_LABEL: Record<KidPermName, string> = {
   'custom-username': 'Custom username',
 };
 
-export type Access = 'on' | 'parent' | 'off';
+/** on · optin = off but the player may turn it on in k-ID settings · parent = a guardian decides · off = prohibited */
+export type Access = 'on' | 'optin' | 'parent' | 'off';
 export type Band = 'kid' | 'teen' | 'adult';
+
+export const ACCESS_LABEL: Record<Access, string> = {
+  on: 'On',
+  optin: 'Off · you can turn it on',
+  parent: 'Needs a parent',
+  off: 'Not available',
+};
 
 export type Policy = {
   ready: boolean;
@@ -62,6 +70,7 @@ function accessOf(p?: KidPerm): Access {
   if (!p) return 'off';
   if (p.enabled) return 'on';
   if (p.managedBy === 'GUARDIAN') return 'parent';
+  if (p.managedBy === 'PLAYER') return 'optin';
   return 'off';
 }
 
@@ -83,20 +92,22 @@ export function getPolicy(user: User): Policy {
   >;
   const ready = rec?.status === 'pass' && !!rec.permissions;
 
-  const canScan: Access =
-    access['camera-access'] === 'off' || access['ai-media-upload'] === 'off'
-      ? 'off'
-      : access['camera-access'] === 'on' && access['ai-media-upload'] === 'on'
-        ? 'on'
-        : 'parent';
+  const cam = [access['camera-access'], access['ai-media-upload']];
+  const canScan: Access = cam.includes('off')
+    ? 'off'
+    : cam.every((a) => a === 'on')
+      ? 'on'
+      : cam.includes('parent')
+        ? 'parent'
+        : 'optin';
 
   const chat = access['text-chat-private'];
   const chatMode: Policy['chatMode'] =
-    chat === 'off' ? 'none' : chat === 'parent' ? 'presets' : band === 'adult' ? 'open' : 'filtered';
+    chat === 'off' || chat === 'optin' ? 'none' : chat === 'parent' ? 'presets' : band === 'adult' ? 'open' : 'filtered';
 
   const voiceAccess = access['voice-chat'];
   const voice: Policy['voice'] =
-    voiceAccess === 'off' && band !== 'kid'
+    voiceAccess !== 'on' && band !== 'kid'
       ? 'none'
       : band === 'kid'
         ? 'hide-on-risk'
@@ -107,7 +118,7 @@ export function getPolicy(user: User): Policy {
   const trade = access['virtual-property-ownership'];
   const buy = access['in-game-purchases'];
   const purchase: Policy['purchase'] =
-    buy === 'off' ? 'off' : buy === 'parent' || band === 'kid' ? 'parent' : band === 'teen' ? 'limit' : 'free';
+    buy === 'off' || buy === 'optin' ? 'off' : buy === 'parent' || band === 'kid' ? 'parent' : band === 'teen' ? 'limit' : 'free';
 
   const where = COUNTRY_NAME[user.country];
   const reasons: string[] = [];
@@ -115,7 +126,7 @@ export function getPolicy(user: User): Policy {
   for (const n of KID_PERMISSIONS) {
     const a = access[n];
     reasons.push(
-      `${PERM_LABEL[n]}: ${a === 'on' ? 'on' : a === 'parent' ? 'a parent decides' : 'not available'}`,
+      `${PERM_LABEL[n]}: ${ACCESS_LABEL[a]}`,
     );
   }
 
@@ -133,7 +144,7 @@ export function getPolicy(user: User): Policy {
     priceView: band === 'kid' ? 'plain' : band === 'teen' ? 'range' : 'full',
     chatMode,
     voice,
-    canTrade: trade !== 'off',
+    canTrade: trade === 'on' || trade === 'parent',
     tradeNeedsParent: trade === 'parent' || band === 'kid',
     purchase,
     purchaseLimitUsd: purchase === 'limit' ? 5 : purchase === 'free' ? null : 0,

@@ -3,6 +3,7 @@
 import { View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
+import { SimulateKid } from '@/components/kid/SimulateKid';
 import { Note } from '@/components/ui';
 import { apiOrigin } from '@/lib/api';
 import { C } from '@/lib/theme';
@@ -28,6 +29,7 @@ export function KidGate({ user, country, path = '/kid/gate' }: { user: User; cou
         domStorageEnabled
         sharedCookiesEnabled
       />
+      <SimulateKid user={user} country={country} />
     </View>
   );
 }

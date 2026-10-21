@@ -1,10 +1,11 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { act, useDB } from '@/lib/api';
 import { useDevice } from '@/lib/device';
-import { COUNTRY_NAME, getPolicy, KID_PERMISSIONS, PERM_LABEL } from '@/lib/policy';
+import { ACCESS_LABEL, COUNTRY_NAME, getPolicy, KID_PERMISSIONS, PERM_LABEL } from '@/lib/policy';
 import { C } from '@/lib/theme';
 import type { Country, PersonaId } from '@/lib/types';
 
@@ -68,8 +69,8 @@ export function TopBar() {
 
       <Pressable onPress={() => setOpen(true)} style={styles.banner}>
         <Txt size={12} color={C.muted} numberOfLines={1}>
-          <Txt size={12} weight="semi" color={C.accent}>
-            Rules from k-ID
+          <Txt size={12} weight="semi" color={policy.source === 'simulated' ? C.warning : C.accent}>
+            {policy.source === 'simulated' ? 'Simulated k-ID rules' : 'Rules from k-ID'}
           </Txt>
           {`  ·  ${user.name}, ${policy.age}  ·  ${policy.countryName}  ·  ${statusLine}`}
         </Txt>
@@ -98,8 +99,8 @@ export function TopBar() {
                     <Txt>{PERM_LABEL[n]}</Txt>
                     <Txt
                       weight="semi"
-                      color={a === 'on' ? C.success : a === 'parent' ? C.warning : C.muted}>
-                      {a === 'on' ? 'On' : a === 'parent' ? 'Needs a parent' : 'Not available'}
+                      color={a === 'on' ? C.success : a === 'parent' ? C.warning : a === 'optin' ? C.accent : C.muted}>
+                      {ACCESS_LABEL[a]}
                     </Txt>
                   </View>
                 );
@@ -112,6 +113,13 @@ export function TopBar() {
                     ? 'Reported by the k-ID SDK on this device.'
                     : ''}
               </Txt>
+              <Btn
+                label="Change in k-ID settings"
+                onPress={() => {
+                  setOpen(false);
+                  router.push('/settings');
+                }}
+              />
               <Btn label="Close" kind="quiet" onPress={() => setOpen(false)} />
             </ScrollView>
           </Pressable>

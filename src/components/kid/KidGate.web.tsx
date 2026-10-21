@@ -2,45 +2,22 @@
 import {
   KidAskAnAdult,
   KidCollectAge,
-  KidCoreProvider,
   KidSelectJurisdiction,
   KidSessionProvider,
   KidVerifyAge,
   useKidAgeGate,
   useKidSession,
 } from '@k-id/core';
-import { deDE, koKR } from '@k-id/core/localizations';
 import { useEffect, useRef } from 'react';
 import { View } from 'react-native';
 
+import { KidRoot } from '@/components/kid/KidRoot';
+import { SimulateKid } from '@/components/kid/SimulateKid';
 import { Btn, Eyebrow, H, Note, Txt } from '@/components/ui';
 import { act, postJSON } from '@/lib/api';
-import { COUNTRY_NAME, KID_PERMISSIONS } from '@/lib/policy';
+import { COUNTRY_NAME } from '@/lib/policy';
 import { C } from '@/lib/theme';
 import type { Country, KidRecord, User } from '@/lib/types';
-
-const DECLARE = {
-  permissions: KID_PERMISSIONS.map((name) => ({ name })),
-  supportEmail: 'yunhalee@stanford.edu',
-  iconUrl: '/icon.png',
-};
-
-const APPEARANCE = {
-  variables: {
-    colorPrimary: C.accent,
-    colorOnPrimary: '#ffffff',
-    colorText: C.text,
-    colorTextMuted: C.muted,
-    colorSurface: C.surface,
-    colorSurfaceMuted: C.surface2,
-    colorBorder: C.line,
-    colorDanger: C.danger,
-    fontFamily: 'Inter, system-ui, sans-serif',
-    radius: '14px',
-  },
-};
-
-const LOCALE: Partial<Record<Country, typeof deDE>> = { DE: deDE, KR: koKR };
 
 function ageFromDob(dob?: string) {
   if (!dob) return undefined;
@@ -56,12 +33,7 @@ export function KidGate({ user, country, rec }: { user: User; country: Country; 
   const report = (patch: Partial<KidRecord>) => act({ action: 'kidUpdate', persona: user.id, country, patch });
   const live = user.liveSignup && !rec?.sessionId;
   return (
-    <KidCoreProvider
-      publishableKey={process.env.EXPO_PUBLIC_KID_PUBLISHABLE_KEY!}
-      baseUrl={process.env.EXPO_PUBLIC_KID_FAPI_BASE}
-      declare={DECLARE}
-      appearance={APPEARANCE}
-      localization={LOCALE[country]}>
+    <KidRoot country={country}>
       <KidSessionProvider
         key={`${user.id}-${country}`}
         jurisdiction={live && country === 'US' ? 'auto' : country}
@@ -77,7 +49,10 @@ export function KidGate({ user, country, rec }: { user: User; country: Country; 
         }>
         <Flow user={user} country={country} rec={rec} report={report} />
       </KidSessionProvider>
-    </KidCoreProvider>
+      {new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('embed') ? null : (
+        <SimulateKid user={user} country={country} />
+      )}
+    </KidRoot>
   );
 }
 

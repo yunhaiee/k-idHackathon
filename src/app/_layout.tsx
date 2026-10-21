@@ -36,6 +36,7 @@ export default function RootLayout() {
             <Stack.Screen name="listing/[id]" options={{ presentation: 'card' }} />
             <Stack.Screen name="settings" />
             <Stack.Screen name="kid/gate" />
+            <Stack.Screen name="kid/settings" />
           </Stack>
         </ThemeProvider>
       </DeviceProvider>
