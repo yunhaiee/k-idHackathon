@@ -1,6 +1,9 @@
 import { seedDB } from '@/lib/seed';
 import type { Country, KidRecord, PersonaId } from '@/lib/types';
+import { runTask } from 'expo-server';
+
 import { mutate, readDB, uid, writeDB } from '@/server/db';
+import { applyPrices, refreshPrices } from '@/server/prices';
 import { createOffer, parentDecision, respondOffer } from '@/server/trade';
 
 export async function GET(request: Request) {
@@ -45,7 +48,11 @@ async function handle(body: Action): Promise<Response> {
       const db = seedDB();
       db.version = prev.version + 1;
       for (const u of Object.values(db.users)) if (!u.liveSignup) u.kid = prev.users[u.id]?.kid ?? {};
+      // Real prices: apply the last good ones now, then refresh from TCGplayer in the background.
+      db.priceCache = prev.priceCache;
+      applyPrices(db);
       await writeDB(db);
+      runTask(() => refreshPrices().catch((e) => console.warn('[prices] refresh failed', String(e))));
       return Response.json(db);
     }
     case 'setCountry':

@@ -159,16 +159,16 @@ Real k-ID behaviour we found (design around it, don't fake it):
 - **Germany:** digital consent age is 16, so Jordan (15) needs a parent there. Switching his country starts a fresh k-ID session with Germany's rules.
 - **Reset demo** resets Maya only; Jordan and Mom keep their k-ID sessions.
 
-Seed cards: Maya owns **Mewtwo $86 (listed)** + Snorlax $28 · Jordan owns Pikachu $12, Eevee $6, Gengar $48 (listed) · Mom owns **Charizard $320 (listed)**, Blastoise $95, Dragonite $40. Shop: Holo Binder Theme $2.99, Digital Slab $4.99, Safe Trade Protection $1.99, Collector Pro+ $7.99/mo.
+Cards (prices are **real TCGplayer market prices**, refreshed by the server from the Pokémon TCG API on every Reset; `seed.ts` prices are only the fallback): Maya owns **Mewtwo $86.16 (listed)** + Snorlax $156.56 · Jordan owns Pikachu $10.56, Eevee $2.15, Gengar $223.38 (listed) · Mom owns **Charizard $954.65 (listed)**, Blastoise $226.58, Dragonite $191.21. Each card has `card.priceSource` (e.g. "TCGplayer market · Base · updated 2026/10/15"); show it in the teen/adult price view so judges see the prices are real. Shop: Holo Binder Theme $2.99, Digital Slab $4.99, Safe Trade Protection $1.99, Collector Pro+ $7.99/mo.
 
 ## 10. Current demo scenario (you own it; change freely)
 
 Devices: Maya on a phone (the judge holds it), Jordan on a phone, Mom on the laptop.
 
 1. **Hook (10s):** "Kids are the most passionate card collectors, and every marketplace bans them. So they trade on playgrounds and get ripped off. Kardza is one marketplace that adapts to every age."
-2. **Same screen, three people (20s):** all three on the Mewtwo listing. Maya sees "About $85", Jordan a fair range, Mom the exact price + market. Point at the banner: k-ID decides this.
+2. **Same screen, three people (20s):** all three on the Mewtwo listing. Maya sees "About $85", Jordan a fair range, Mom the exact price ($86.16, real TCGplayer market). Point at the banner: k-ID decides this.
 3. **Live sign-up (25s):** judge's phone, Maya, age 11. k-ID: under 13 in the US, so it asks for a parent email. Mom approves on her phone, and Maya's phone opens the app by itself.
-4. **Lowball + voice note (30s):** Jordan offers Eevee + Pikachu for Mewtwo and sends the sample voice note ("text me at 555…, don't tell your mom, meet after school"). Maya sees "This trade isn't fair" + "Message hidden for your safety". Mom gets an alert with the reason and Modulate's Velma finding. Jordan sees the "lopsided" nudge.
+4. **Lowball + voice note (30s):** Jordan offers Eevee + Pikachu (about $13) for Mewtwo ($86) and sends the sample voice note ("text me at 555…, don't tell your mom, meet after school"). Maya sees "This trade isn't fair" + "Message hidden for your safety". Mom gets an alert with the reason and Modulate's Velma finding. Jordan sees the "lopsided" nudge.
 5. **Buying + location (25s):** Maya taps "Ask Alex" and Mom pays. Jordan buys a $2.99 item himself. Switch Jordan to Germany: k-ID's rules change (consent age 16), and the k-ID widget switches to German.
 6. **Close (10s):** "Same teen, same message, same screens. The kid is protected, the adult is informed, and k-ID decides what opens up."
 
