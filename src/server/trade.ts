@@ -87,7 +87,8 @@ export function respondOffer(db: DB, offerId: string, by: PersonaId, accept: boo
     return;
   }
   const me = db.users[by];
-  if (getPolicy(me).tradeNeedsParent && me.parentId && !offer.parentApproved) {
+  // Even after the parent let the offer through, a parent-managed child's trade still needs their final OK.
+  if (getPolicy(me).tradeNeedsParent && me.parentId) {
     offer.status = 'needs-parent';
     db.requests.unshift({
       id: uid('r'),

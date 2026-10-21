@@ -1,5 +1,11 @@
 # Notes for Yunha (from Oliver, branch `oliver-demo`)
 
+> **Latest (Oliver):** `oliver-demo` now has your `main` merged in. Your server version is the one kept; `oliver-server` is superseded, so don't merge it.
+> Two small changes on top of yours, please check:
+> 1. `src/server/trade.ts` `respondOffer`: removed `&& !offer.parentApproved`. After "Let Leo see it", Leo accepting still goes to Anna for the final OK, as the demo script says.
+> 2. `src/app/(tabs)/parent.tsx`: Anna's review list now reads your held state (`needs-parent`, no `parentApproved`, no request yet).
+> Also merged: your `?as=` persona check with my `?persona=` + per-frame memory (`src/lib/device.tsx`), and your real ~$70 Charizards (`seed.ts`).
+
 New demo: **Maya 14 🇺🇸 · Leo 14 🇩🇪 · Anna (Leo's mom) · Devon 25 🇺🇸**, shown side by side at **`/demo`**.
 I only touched UI, copy, seed and M5 files. Everything below that needs your files is written as the exact change.
 

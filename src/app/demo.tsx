@@ -4,7 +4,7 @@ import { createElement, useState } from 'react';
 import { Platform, useWindowDimensions, View } from 'react-native';
 
 import { Chip, Eyebrow, H, Page, Txt } from '@/components/ui';
-import { useDB } from '@/lib/api';
+import { act, useDB } from '@/lib/api';
 import { FRAME } from '@/lib/device';
 import { COPY } from '@/lib/copy';
 import { FLAG } from '@/lib/demo';
@@ -71,6 +71,9 @@ export default function Demo() {
   const db = useDB();
   const win = useWindowDimensions();
   const [pick, setPick] = useState<Record<number, number>>({});
+  const [resetting, setResetting] = useState(false);
+  // Bumped by Reset: remounts every phone frame.
+  const [nonce, setNonce] = useState(0);
 
   if (Platform.OS !== 'web')
     return (
@@ -89,9 +92,27 @@ export default function Demo() {
           <Eyebrow color={C.accent}>Rules from k-ID · live</Eyebrow>
           <H size={24}>{COPY.demo.title}</H>
         </View>
-        <Txt size={13} color={C.muted}>
-          {COPY.demo.hint}
-        </Txt>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <Txt size={13} color={C.muted}>
+            {COPY.demo.hint}
+          </Txt>
+          {/* Small presenter reset: same action as ··· → Reset demo, then reloads every phone so no sheet stays open. */}
+          <Chip
+            label={resetting ? COPY.demo.resetting : COPY.demo.reset}
+            color={C.danger}
+            active
+            onPress={async () => {
+              if (resetting) return;
+              setResetting(true);
+              try {
+                await act({ action: 'reset' });
+                setNonce((n) => n + 1);
+              } finally {
+                setResetting(false);
+              }
+            }}
+          />
+        </View>
       </View>
 
       <View style={{ flexDirection: 'row', justifyContent: 'center', gap: GAP }}>
@@ -110,7 +131,7 @@ export default function Demo() {
               </View>
               {/* Both phones in a pair stay mounted so the toggle never loses their state. */}
               {group.map((id, j) => (
-                <Phone key={id} id={id} scale={scale} hidden={j !== shown} />
+                <Phone key={`${id}-${nonce}`} id={id} scale={scale} hidden={j !== shown} />
               ))}
             </View>
           );

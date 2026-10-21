@@ -32,7 +32,8 @@ export default function FamilyOrMe() {
   const requests = db.requests.filter((r) => r.parentId === persona && r.status === 'pending');
   // Offers to a child whose k-ID rules make trading parent-managed come to the parent first.
   const reviews = db.offers.filter(
-    (o) => kidIds.has(o.toId) && o.status === 'pending' && getPolicy(db.users[o.toId]).tradeNeedsParent,
+    // Held = needs-parent before the parent has reviewed it (no final-approval request yet).
+    (o) => kidIds.has(o.toId) && o.status === 'needs-parent' && !o.parentApproved && !db.requests.some((r) => r.offerId === o.id),
   );
   const reviewed = new Set(reviews.map((o) => o.id));
   // The server's "unfair offer" alert says the same as the offer review below, so it isn't repeated.

@@ -33,7 +33,11 @@ export async function sendVoiceNote(offerId: string, fromId: PersonaId, voice: V
   }
   if (!res.ok) {
     const body = await res.text().catch(() => '');
-    throw new Error(`${res.status} ${body.replace(/<[^>]+>/g, ' ').trim().slice(0, 140) || res.statusText}`);
+    let reason = body.replace(/<[^>]+>/g, ' ').trim().slice(0, 140);
+    try {
+      reason = (JSON.parse(body) as { error?: string }).error ?? reason;
+    } catch {}
+    throw new Error(reason || `${res.status} ${res.statusText}`);
   }
 }
 
