@@ -1,0 +1,9 @@
+# Explicit list (do NOT inherit .gitignore: vendor/ and dist/ must be uploaded)
+.git
+node_modules
+.expo
+data
+.env
+.env.*
+ios
+android
