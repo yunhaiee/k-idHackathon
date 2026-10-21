@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { COPY } from './copy';
 import { type DemoOffer, heldForParent } from './demo';
-import { getPolicy } from './policy';
+import { CREDIBILITY_BURST_MS, CREDIBILITY_HIT } from './policy';
 import { PRODUCTS } from './seed';
 import type { DB, PersonaId } from './types';
 
@@ -12,15 +12,31 @@ export type NotifyTab = 'inbox' | 'parent' | 'shop';
 export type NotifyEvent = { id: string; tab: NotifyTab; text: string; tone: 'info' | 'danger' | 'ok' };
 
 /** How long to wait for an offer's voice note before announcing the offer on its own. */
-const SETTLE_MS = 15_000;
+export const SETTLE_MS = 15_000;
+
+/**
+ * When this phone first saw an offer, by this phone's own clock (so a phone whose clock differs from the server's
+ * doesn't shift the wait). Offers already there when the app opened count as long settled.
+ */
+export type ArrivedAt = (offerId: string) => number;
 
 export const TAB_PATH: Record<NotifyTab, string> = { inbox: '/inbox', parent: '/parent', shop: '/shop' };
 
+/** The next time an unsettled offer to this persona settles on its own (no voice note), for one wake-up timer. */
+export function nextSettleAt(db: DB, me: PersonaId, arrivedAt: ArrivedAt, now = Date.now()): number | null {
+  let next: number | null = null;
+  for (const o of db.offers)
+    if (o.toId === me && !db.messages.some((m) => m.offerId === o.id && m.fromId === o.fromId)) {
+      const at = arrivedAt(o.id) + SETTLE_MS;
+      if (at > now && (next == null || at < next)) next = at;
+    }
+  return next;
+}
+
 /** Everything that has "arrived" for this persona, worded for them by their k-ID policy. */
-export function eventsFor(db: DB, me: PersonaId, now = Date.now()): NotifyEvent[] {
+export function eventsFor(db: DB, me: PersonaId, arrivedAt: ArrivedAt, now = Date.now()): NotifyEvent[] {
   const user = db.users[me];
   if (!user) return [];
-  const policy = getPolicy(user);
   const out: NotifyEvent[] = [];
   const name = (id: PersonaId) => db.users[id]?.name ?? 'Someone';
   const cardOf = (listingId: string) => {
@@ -32,17 +48,17 @@ export function eventsFor(db: DB, me: PersonaId, now = Date.now()): NotifyEvent[
     // An offer and its voice note land a few seconds apart; announce them as one arrival, once the note is in
     // (or after SETTLE_MS if there is none), so the first toast already says the right thing.
     const notes = db.messages.filter((m) => m.offerId === o.id && m.fromId !== me);
-    const settled = notes.some((m) => m.fromId === o.fromId) || now - o.createdAt > SETTLE_MS;
+    const settled = notes.some((m) => m.fromId === o.fromId) || now - arrivedAt(o.id) > SETTLE_MS;
     const risky = notes.some((m) => m.risk?.level === 'high');
     if (o.toId === me && settled) {
-      const held = heldForParent(policy) && !o.parentApproved;
+      const held = heldForParent(user) && !o.parentApproved;
       out.push(
         held
           ? { id: `arrive:${o.id}`, tab: 'inbox', text: risky ? COPY.voice.hidden : COPY.voice.held, tone: risky ? 'danger' : 'info' }
           : { id: `arrive:${o.id}`, tab: 'inbox', text: COPY.offer.newOffer(name(o.fromId), cardOf(o.listingId)), tone: risky ? 'danger' : 'info' },
       );
       if (o.parentApproved)
-        out.push({ id: `released:${o.id}`, tab: 'inbox', text: COPY.notify.released(name(o.fromId)), tone: 'info' });
+        out.push({ id: `released:${o.id}`, tab: 'inbox', text: COPY.notify.released(name(o.fromId), risky), tone: risky ? 'danger' : 'info' });
       // The sender's first note belongs to the offer's single notification, however late Modulate returns it;
       // only later replies in the thread are their own notifications.
       const attached = notes.find((m) => m.fromId === o.fromId);
@@ -54,14 +70,18 @@ export function eventsFor(db: DB, me: PersonaId, now = Date.now()): NotifyEvent[
     if (o.fromId === me) {
       if (o.status === 'countered' && o.counterUsd != null)
         out.push({ id: `counter:${o.id}`, tab: 'inbox', text: COPY.notify.counter(name(o.toId), o.counterUsd), tone: 'info' });
-      // One credibility nudge per burst ("send to both" flags two copies of the same note).
-      for (const m of db.messages)
-        if (m.offerId === o.id && m.fromId === me && m.risk?.level === 'high')
-          out.push({ id: `flag:${Math.floor(m.createdAt / 60_000)}`, tab: 'inbox', text: COPY.sender.flagged(5), tone: 'danger' });
     }
     if ((o.fromId === me || o.toId === me) && o.status === 'accepted')
       out.push({ id: `deal:${o.id}`, tab: 'inbox', text: COPY.notify.deal(name(o.fromId === me ? o.toId : o.fromId)), tone: 'ok' });
   }
+
+  // One credibility nudge per charge: the same rule as the server's deliverMessage (messages are stored in
+  // arrival order), so "send to both" (two flagged copies within a minute) is one nudge, keyed by the charged message.
+  const flagged = db.messages.filter((m) => m.fromId === me && m.risk?.level === 'high');
+  flagged.forEach((m, i) => {
+    if (!flagged.slice(0, i).some((x) => m.createdAt - x.createdAt < CREDIBILITY_BURST_MS))
+      out.push({ id: `flag:${m.id}`, tab: 'inbox', text: COPY.sender.flagged(CREDIBILITY_HIT), tone: 'danger' });
+  });
 
   for (const a of db.alerts)
     if (a.parentId === me && !a.read) out.push({ id: `alert:${a.id}`, tab: 'parent', text: COPY.notify.alert(name(a.childId)), tone: 'danger' });
@@ -83,7 +103,7 @@ export function eventsFor(db: DB, me: PersonaId, now = Date.now()): NotifyEvent[
       if (product) out.push({ id: `owned:${p.id}`, tab: 'shop', text: COPY.notify.owned(product.name), tone: 'ok' });
     }
 
-  // Same id twice (e.g. one flag for a two-offer burst) counts once.
+  // Same id twice counts once.
   return [...new Map(out.map((e) => [e.id, e])).values()];
 }
 

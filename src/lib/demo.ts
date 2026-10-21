@@ -43,11 +43,10 @@ export const RISK_LABEL: Record<string, string> = {
 };
 
 /**
- * A receiver whose k-ID rules put a parent in charge of both trades and messages gets nothing directly:
- * the offer waits for the parent, and they only see a notice.
+ * A receiver whose k-ID rules put a parent in charge of their trades, and who has that parent on file, gets nothing
+ * directly: the offer waits for the parent, and they only see a notice. Same rule as the server's createOffer hold.
  */
-export const heldForParent = (policy: Policy) =>
-  policy.tradeNeedsParent && policy.access['text-chat-private'] === 'parent';
+export const heldForParent = (user: User) => getPolicy(user).tradeNeedsParent && !!user.parentId;
 
 /**
  * Policy's `tradeNeedsParent` is true both when a parent must approve every trade (under the consent age, Leo)
@@ -64,11 +63,27 @@ export const tradeNeedsGuardianOptIn = (policy: Policy) =>
  */
 export function deliveryOf(db: DB, offer: Offer): { text: string; tone: 'ok' | 'warn' | 'danger' } {
   const to = db.users[offer.toId];
-  const parent = to.parentId ? db.users[to.parentId]?.name : undefined;
-  if (offer.status === 'declined') return { text: `${to.name} declined`, tone: 'danger' };
+  const parent = (to.parentId ? db.users[to.parentId]?.name : undefined) ?? 'a parent';
+  const Parent = parent[0].toUpperCase() + parent.slice(1);
+  const o = offer as DemoOffer;
+  const tradeAsk = db.requests.find((r) => r.kind === 'trade' && r.offerId === offer.id);
+  // The child never saw an offer their parent hasn't let through.
+  const heldByServer = heldForParent(to) && !o.parentApproved;
+  if (offer.status === 'declined') {
+    // The server only stores 'declined', so tell who ended it from what's around it: the block list,
+    // the parent's final-OK request, the counter the sender turned down, or the parent's review.
+    if (blockedOf(to).includes(offer.fromId)) return { text: `Blocked by ${parent}`, tone: 'danger' };
+    if (tradeAsk?.status === 'declined') return { text: `${Parent} declined the trade`, tone: 'danger' };
+    if (o.counterUsd != null) return { text: 'You declined the counter', tone: 'danger' };
+    if (heldByServer) return { text: `${Parent} declined it`, tone: 'danger' };
+    return { text: `${to.name} declined`, tone: 'danger' };
+  }
   if (offer.status === 'accepted') return { text: 'Deal agreed', tone: 'ok' };
-  if (heldForParent(getPolicy(to)) && !(offer as DemoOffer).parentApproved)
-    return { text: `Held for ${parent ?? 'a parent'}'s review`, tone: 'warn' };
+  // Accepted by the child, now waiting for the parent's final OK.
+  if (offer.status === 'needs-parent' && (o.parentApproved || tradeAsk?.status === 'pending'))
+    return { text: `${to.name} said yes · waiting for ${parent}'s OK`, tone: 'warn' };
+  if (offer.status === 'needs-parent' || heldByServer)
+    return { text: `Held for ${parent}'s review`, tone: 'warn' };
   return { text: `Delivered to ${to.name}`, tone: 'ok' };
 }
 

@@ -53,10 +53,12 @@ export const COPY = {
   },
 
   sent: {
-    title: (n: number) => (n > 1 ? `✓ ${n} offers sent` : '✓ Offer sent'),
+    title: (n: number) => (n > 1 ? `${n} offers sent` : 'Offer sent'),
+    dismiss: 'Dismiss',
     checked: 'Kardza Intelligence checked it before delivery.',
-    flagged: "Kardza Intelligence flagged your voice note: sharing contact info isn't allowed (−5 credibility).",
-    you: '✓ Sent',
+    flagged: (kind: 'text' | 'voice', delta: number) =>
+      `Kardza Intelligence flagged your ${kind === 'voice' ? 'voice note' : 'message'}: sharing contact info isn't allowed (−${delta} credibility).`,
+    you: 'Sent',
   },
 
   notify: {
@@ -66,7 +68,7 @@ export const COPY = {
     alert: (child: string) => `Safety alert about ${child}`,
     tradeAsk: (child: string) => `${child} wants to accept a trade`,
     owned: (product: string) => `You got the ${product}`,
-    released: (sender: string) => `Your parent let ${sender}'s offer through. Be careful.`,
+    released: (sender: string, risky: boolean) => `Your parent let ${sender}'s offer through.${risky ? ' Be careful.' : ''}`,
     enable: 'Phone notifications',
   },
 

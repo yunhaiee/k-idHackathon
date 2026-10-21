@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 
 import { Txt } from '@/components/ui';
-import { alertDevice, eventsFor, loadRead, type NotifyEvent, type NotifyTab, saveRead, TAB_PATH } from '@/lib/notify';
+import { alertDevice, eventsFor, loadRead, nextSettleAt, type NotifyEvent, type NotifyTab, saveRead, TAB_PATH } from '@/lib/notify';
 import { C } from '@/lib/theme';
 import type { DB, PersonaId } from '@/lib/types';
 
@@ -12,14 +12,27 @@ import type { DB, PersonaId } from '@/lib/types';
  * and returns unread counts per tab for the badges. Opening a tab marks its events read.
  */
 export function useNotifications(db: DB | null, me: PersonaId) {
-  // Re-check every 2s too: an offer with no voice note is announced after a short wait, even if no new data arrives.
+  // When this phone first saw each offer, by its own clock. Offers already there on the first load count as settled.
+  const firstSeen = useRef<Map<string, number> | null>(null);
+  if (db) {
+    const initial = !firstSeen.current;
+    firstSeen.current ??= new Map();
+    for (const o of db.offers) if (!firstSeen.current.has(o.id)) firstSeen.current.set(o.id, initial ? 0 : Date.now());
+  }
+  const arrivedAt = (id: string) => firstSeen.current?.get(id) ?? 0;
+
+  // An offer with no voice note is announced after a short wait even if no new data arrives: wake up once, then.
   const [tick, setTick] = useState(0);
   useEffect(() => {
-    const t = setInterval(() => setTick((n) => n + 1), 2000);
-    return () => clearInterval(t);
-  }, []);
+    if (!db) return;
+    const at = nextSettleAt(db, me, arrivedAt);
+    if (at == null) return;
+    const t = setTimeout(() => setTick((n) => n + 1), at - Date.now() + 50);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [db, me, tick]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const events = useMemo(() => (db ? eventsFor(db, me) : []), [db, me, tick]);
+  const events = useMemo(() => (db ? eventsFor(db, me, arrivedAt) : []), [db, me, tick]);
   const pathname = usePathname();
   const [read, setRead] = useState<Set<string> | null>(null);
   const [toast, setToast] = useState<NotifyEvent | null>(null);

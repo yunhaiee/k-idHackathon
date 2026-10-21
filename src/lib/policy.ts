@@ -154,3 +154,7 @@ export function getPolicy(user: User): Policy {
     reasons,
   };
 }
+
+/** Credibility lost for a blocked (high-risk) message, once per one-minute burst. Server applies it; UI words it. */
+export const CREDIBILITY_HIT = 5;
+export const CREDIBILITY_BURST_MS = 60_000;

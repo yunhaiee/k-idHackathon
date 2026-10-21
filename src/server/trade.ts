@@ -1,6 +1,6 @@
 /// <reference types="node" />
 // Trade + message rules, enforced on the server from getPolicy (k-ID session), never from the client.
-import { getPolicy } from '@/lib/policy';
+import { CREDIBILITY_BURST_MS, CREDIBILITY_HIT, getPolicy } from '@/lib/policy';
 import type { DB, Message, Offer, PersonaId } from '@/lib/types';
 
 import { uid } from './db';
@@ -153,13 +153,13 @@ export function deliverMessage(db: DB, msg: Message) {
   const to = db.users[toId];
   if (to.blocked?.includes(msg.fromId)) return;
   db.messages.push(msg);
-  // Credibility: -5 for a blocked (high-risk) message, charged once per one-minute burst ("send to both").
+  // Credibility: -CREDIBILITY_HIT for a blocked (high-risk) message, charged once per one-minute burst ("send to both").
   if (msg.risk?.level === 'high') {
     const from = db.users[msg.fromId];
     const recent = db.messages.some(
-      (m) => m.id !== msg.id && m.fromId === msg.fromId && m.risk?.level === 'high' && msg.createdAt - m.createdAt < 60_000,
+      (m) => m.id !== msg.id && m.fromId === msg.fromId && m.risk?.level === 'high' && msg.createdAt - m.createdAt < CREDIBILITY_BURST_MS,
     );
-    if (from.credibility != null && !recent) from.credibility = Math.max(0, from.credibility - 5);
+    if (from.credibility != null && !recent) from.credibility = Math.max(0, from.credibility - CREDIBILITY_HIT);
   }
   if (msg.risk?.level === 'high' && getPolicy(to).band === 'kid' && to.parentId) {
     db.alerts.unshift({

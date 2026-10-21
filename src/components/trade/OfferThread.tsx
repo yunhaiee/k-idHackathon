@@ -51,7 +51,7 @@ export function OfferThread({ db, offer, me }: { db: DB; offer: Offer; me: Perso
   const released = !!(offer as DemoOffer).parentApproved;
   // A sender this child's parent blocked can't reach them: nothing from them shows.
   if (role === 'receiver' && blockedOf(db.users[me]).includes(offer.fromId)) return null;
-  if (role === 'receiver' && heldForParent(policy) && !released && (offer.status === 'pending' || offer.status === 'needs-parent')) {
+  if (role === 'receiver' && heldForParent(db.users[me]) && !released && (offer.status === 'pending' || offer.status === 'needs-parent')) {
     const blocked = messages.some((m) => m.risk?.level === 'high');
     return (
       <View style={{ gap: 12, paddingVertical: 8 }}>

@@ -6,12 +6,9 @@ import { Btn, Eyebrow, Note, Txt } from '@/components/ui';
 import { WhyChip } from '@/components/WhyChip';
 import { apiUrl } from '@/lib/api';
 import { COPY } from '@/lib/copy';
-import type { Policy } from '@/lib/policy';
+import { CREDIBILITY_HIT, type Policy } from '@/lib/policy';
 import { C } from '@/lib/theme';
 import type { Message, PersonaId, User } from '@/lib/types';
-
-/** Credibility lost for a blocked message. The server applies it (NOTES_FOR_YUNHA.md); the UI only says so. */
-const CREDIBILITY_HIT = 5;
 
 /** "Kardza Intelligence · checked by Modulate + AI", or "(voice check simulated)" when Modulate didn't answer. */
 export function checkedLabel(msg: Message) {
@@ -64,14 +61,14 @@ export function MessageView({
   const checked = checkedLabel(msg);
   const label = `${mine ? 'You' : from.name} · ${msg.kind === 'voice' ? 'voice note' : 'message'}`;
 
-  // Own message: a chat bubble on the right, with what happened to it underneath.
+  // Own message: right-aligned with a right rule (the mirror of Note), with what happened to it underneath.
   if (mine)
     return (
       <View style={{ gap: 6, alignSelf: 'flex-end', maxWidth: '88%' }}>
-        <View style={{ backgroundColor: C.surface2, borderRadius: 16, borderBottomRightRadius: 4, padding: 12, gap: 6 }}>
+        <View style={{ borderRightWidth: 2, borderRightColor: C.line, paddingRight: 12, paddingVertical: 4, gap: 6, alignItems: 'flex-end' }}>
           <Eyebrow>{label}</Eyebrow>
           {msg.audioUrl ? <Play url={msg.audioUrl} /> : null}
-          <Txt size={14} color={msg.kind === 'voice' ? C.muted : C.text}>
+          <Txt size={14} color={msg.kind === 'voice' ? C.muted : C.text} style={{ textAlign: 'right' }}>
             {body}
           </Txt>
         </View>

@@ -1,8 +1,9 @@
 import { Pressable, View } from 'react-native';
 
-import { Txt } from '@/components/ui';
+import { Eyebrow, Txt } from '@/components/ui';
 import { COPY } from '@/lib/copy';
 import { deliveryOf } from '@/lib/demo';
+import { CREDIBILITY_HIT } from '@/lib/policy';
 import { C } from '@/lib/theme';
 import type { DB } from '@/lib/types';
 
@@ -10,37 +11,29 @@ import type { DB } from '@/lib/types';
 export function SentBanner({ db, offerIds, onDismiss }: { db: DB; offerIds: string[]; onDismiss: () => void }) {
   const offers = offerIds.map((id) => db.offers.find((o) => o.id === id)).filter((o) => !!o);
   if (!offers.length) return null;
-  const flagged = db.messages.some((m) => offerIds.includes(m.offerId) && m.risk?.level === 'high');
+  // Only the sender's own messages: a flagged reply from the receiver isn't the sender's fault.
+  const flagged = db.messages.find((m) => m.risk?.level === 'high' && offers.some((o) => o.id === m.offerId && o.fromId === m.fromId));
   const tone = { ok: C.success, warn: C.warning, danger: C.danger };
   return (
-    <View
-      style={{
-        backgroundColor: C.surface,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: C.line,
-        padding: 14,
-        gap: 8,
-      }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Txt weight="display" size={17} color={C.success}>
-          {COPY.sent.title(offers.length)}
-        </Txt>
+    <View style={{ borderLeftWidth: 2, borderLeftColor: flagged ? C.danger : C.success, paddingLeft: 12, paddingVertical: 4, gap: 6 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
+        <Eyebrow>{COPY.sent.title(offers.length)}</Eyebrow>
         <Pressable onPress={onDismiss} hitSlop={10}>
-          <Txt color={C.muted}>✕</Txt>
+          <Txt size={12} color={C.muted}>
+            {COPY.sent.dismiss}
+          </Txt>
         </Pressable>
       </View>
       {offers.map((o) => {
         const d = deliveryOf(db, o);
         return (
-          <View key={o.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: tone[d.tone] }} />
-            <Txt size={14}>{d.text}</Txt>
-          </View>
+          <Txt key={o.id} size={14} color={tone[d.tone]}>
+            {d.text}
+          </Txt>
         );
       })}
       <Txt size={12} color={flagged ? C.danger : C.muted}>
-        {flagged ? COPY.sent.flagged : COPY.sent.checked}
+        {flagged ? COPY.sent.flagged(flagged.kind, CREDIBILITY_HIT) : COPY.sent.checked}
       </Txt>
     </View>
   );
