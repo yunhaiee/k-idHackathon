@@ -64,7 +64,7 @@ export default function Scan() {
 
   return (
     <Page>
-      <Eyebrow>Scan · Gemini</Eyebrow>
+      <Eyebrow>Scan · AI card check</Eyebrow>
       <H>{policy.bigUI ? 'What card is this?' : 'Scan a card'}</H>
 
       {policy.canScan === 'off' ? (
@@ -95,12 +95,12 @@ export default function Scan() {
       )}
 
       {photo ? <Image source={photo} style={{ width: '100%', height: 300 }} contentFit="contain" /> : null}
-      {busy ? <Txt color={C.muted}>Gemini is looking at your card…</Txt> : null}
+      {busy ? <Txt color={C.muted}>Checking your card…</Txt> : null}
 
       {result ? (
         <View style={{ gap: 10 }}>
           <Eyebrow color={result.simulated ? C.warning : C.accent}>
-            {result.simulated ? 'Simulated · Gemini unavailable' : `Identified by ${result.model ?? 'Gemini'}`}
+            {result.simulated ? 'Simulated · AI unavailable' : `Identified by ${result.model ?? 'AI'}`}
           </Eyebrow>
           <H size={22}>{result.name}</H>
           <Txt color={C.muted}>

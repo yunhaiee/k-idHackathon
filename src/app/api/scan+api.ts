@@ -1,20 +1,19 @@
 // Card photo → Gemini: identify, estimate price, flag anything that looks off. Never claims "authentic".
 import type { ScanResult } from '@/lib/types';
-import { geminiJSON } from '@/server/gemini';
-
-
+import { aiJSON } from '@/server/ai';
 
 const SCHEMA = {
-  type: 'OBJECT',
+  type: 'object',
   properties: {
-    name: { type: 'STRING' },
-    set: { type: 'STRING' },
-    number: { type: 'STRING' },
-    estimatedPriceUsd: { type: 'NUMBER' },
-    fakeRisk: { type: 'STRING', enum: ['low', 'medium', 'high'] },
-    reasons: { type: 'ARRAY', items: { type: 'STRING' } },
+    name: { type: 'string' },
+    set: { type: 'string' },
+    number: { type: 'string' },
+    estimatedPriceUsd: { type: 'number' },
+    fakeRisk: { type: 'string', enum: ['low', 'medium', 'high'] },
+    reasons: { type: 'array', items: { type: 'string' } },
   },
   required: ['name', 'set', 'number', 'estimatedPriceUsd', 'fakeRisk', 'reasons'],
+  additionalProperties: false,
 };
 
 const PROMPT = `You are a trading-card grader's assistant. Identify the card in the photo.
@@ -28,7 +27,7 @@ const SIMULATED: ScanResult = {
   number: '10/102',
   estimatedPriceUsd: 55,
   fakeRisk: 'low',
-  reasons: ['Simulated result: Gemini was unavailable'],
+  reasons: ['Simulated result: the AI service was unavailable'],
   simulated: true,
 };
 
@@ -43,8 +42,8 @@ export async function POST(request: Request) {
       data = Buffer.from(await img.arrayBuffer()).toString('base64');
     }
     if (!data) return Response.json({ error: 'no image' }, { status: 400 });
-    const { data: result, model } = await geminiJSON<ScanResult>(
-      [{ inline_data: { mime_type: mime, data } }, { text: PROMPT }],
+    const { data: result, model } = await aiJSON<ScanResult>(
+      { text: PROMPT, imageBase64: data, mimeType: mime },
       SCHEMA,
     );
     return Response.json({ ...result, model });
