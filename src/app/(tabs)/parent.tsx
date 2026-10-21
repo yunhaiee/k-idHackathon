@@ -30,10 +30,8 @@ export default function FamilyOrMe() {
   const kids = Object.values(db.users).filter((u) => u.parentId === persona);
   const kidIds = new Set(kids.map((k) => k.id));
   const requests = db.requests.filter((r) => r.parentId === persona && r.status === 'pending');
-  // Offers to a child whose k-ID rules make trading parent-managed come to the parent first.
-  const reviews = db.offers.filter(
-    (o) => kidIds.has(o.toId) && o.status === 'pending' && getPolicy(db.users[o.toId]).tradeNeedsParent,
-  );
+  // Offers to a child under the consent age are held for the parent first (server: status 'held').
+  const reviews = db.offers.filter((o) => kidIds.has(o.toId) && o.status === 'held');
   const reviewed = new Set(reviews.map((o) => o.id));
   // The server's "unfair offer" alert says the same as the offer review below, so it isn't repeated.
   const alerts = db.alerts.filter(
@@ -145,11 +143,7 @@ export default function FamilyOrMe() {
                   <Btn
                     label={COPY.parent.decline}
                     kind="quiet"
-                    onPress={async () => {
-                      // Until parentReviewOffer exists, declining on the child's behalf is the closest real action.
-                      if (!(await tryAct(o.id, { action: 'parentReviewOffer', offerId: o.id, by: persona, approve: false })))
-                        await act({ action: 'respondOffer', offerId: o.id, by: child.id, accept: false });
-                    }}
+                    onPress={() => tryAct(o.id, { action: 'parentReviewOffer', offerId: o.id, by: persona, approve: false })}
                     style={{ flex: 1 }}
                   />
                   <Btn

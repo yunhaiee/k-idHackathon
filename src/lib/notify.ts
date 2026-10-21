@@ -53,6 +53,11 @@ export function eventsFor(db: DB, me: PersonaId): NotifyEvent[] {
       out.push({ id: `deal:${o.id}`, tab: 'inbox', text: COPY.notify.deal(name(o.fromId === me ? o.toId : o.fromId)), tone: 'ok' });
   }
 
+  // Parent: a held offer to their child that no safety alert covers yet.
+  for (const o of db.offers)
+    if (o.status === 'held' && db.users[o.toId]?.parentId === me && !db.alerts.some((a) => a.offerId === o.id && a.messageId))
+      out.push({ id: `review:${o.id}`, tab: 'parent', text: COPY.notify.review(name(o.fromId), name(o.toId), cardOf(o.listingId)), tone: 'info' });
+
   for (const a of db.alerts)
     if (a.parentId === me && !a.read) out.push({ id: `alert:${a.id}`, tab: 'parent', text: COPY.notify.alert(name(a.childId)), tone: 'danger' });
 

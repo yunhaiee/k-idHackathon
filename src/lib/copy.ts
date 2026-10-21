@@ -53,6 +53,7 @@ export const COPY = {
     deal: (who: string) => `Deal agreed with ${who}`,
     alert: (child: string) => `Safety alert about ${child}`,
     tradeAsk: (child: string) => `${child} wants to accept a trade`,
+    review: (sender: string, child: string, card: string) => `${sender} made an offer on ${child}'s ${card}`,
     owned: (product: string) => `You got the ${product}`,
     enable: 'Phone notifications',
   },

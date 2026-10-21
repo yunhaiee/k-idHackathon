@@ -6,7 +6,7 @@ import { Credibility } from '@/components/Credibility';
 import { WhyChip } from '@/components/WhyChip';
 import { act } from '@/lib/api';
 import { COPY } from '@/lib/copy';
-import { analysisOf, cashOf, credibilityOf, type DemoOffer, heldForParent, RISK_LABEL } from '@/lib/demo';
+import { analysisOf, blockedOf, cashOf, credibilityOf, type DemoOffer, heldForParent, RISK_LABEL } from '@/lib/demo';
 import { getPolicy } from '@/lib/policy';
 import { C } from '@/lib/theme';
 import type { DB, Offer, PersonaId } from '@/lib/types';
@@ -15,6 +15,12 @@ import { Composer } from './Composer';
 import { FairMeter } from './FairMeter';
 import { checkedLabel, MessageView } from './MessageView';
 import { OfferActions } from './OfferActions';
+
+const STATUS_LABEL: Partial<Record<Offer['status'], string>> = {
+  held: 'with a parent for review',
+  'needs-parent': 'waiting for a parent',
+  countered: 'countered',
+};
 
 const value = (db: DB, ids: string[]) => ids.reduce((s, id) => s + (db.cards.find((c) => c.id === id)?.priceUsd ?? 0), 0);
 
@@ -42,7 +48,9 @@ export function OfferThread({ db, offer, me }: { db: DB; offer: Offer; me: Perso
   // k-ID puts a parent in charge of this receiver's trades and messages: nothing reaches them directly.
   // Held until the parent taps "Let … see it" (offer.parentApproved, set by the server).
   const released = !!(offer as DemoOffer).parentApproved;
-  if (role === 'receiver' && heldForParent(policy) && !released && (offer.status === 'pending' || offer.status === 'needs-parent')) {
+  // A sender this child's parent blocked can't reach them: nothing from them shows.
+  if (role === 'receiver' && blockedOf(db.users[me]).includes(offer.fromId)) return null;
+  if (role === 'receiver' && heldForParent(policy) && !released && (offer.status === 'held' || offer.status === 'pending')) {
     const blocked = messages.some((m) => m.risk?.level === 'high');
     return (
       <View style={{ gap: 12, paddingVertical: 8 }}>
@@ -57,7 +65,7 @@ export function OfferThread({ db, offer, me }: { db: DB; offer: Offer; me: Perso
     <View style={{ gap: 12, paddingVertical: 8 }}>
       <Eyebrow>
         {role === 'sender' ? `Your offer to ${other.name}` : `${other.name}'s offer`} ·{' '}
-        {offer.status === 'needs-parent' ? 'waiting for a parent' : offer.status}
+        {STATUS_LABEL[offer.status] ?? offer.status}
       </Eyebrow>
       {credibility != null ? <Credibility score={credibility} prefix={role === 'sender' ? 'You' : sender.name} /> : null}
       <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
