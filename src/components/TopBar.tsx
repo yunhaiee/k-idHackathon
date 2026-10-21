@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -8,11 +9,13 @@ import { useDevice } from '@/lib/device';
 import { ACCESS_LABEL, COUNTRY_NAME, getPolicy, KID_PERMISSIONS, PERM_LABEL } from '@/lib/policy';
 import { C } from '@/lib/theme';
 import { COPY } from '@/lib/copy';
+import { credibilityOf } from '@/lib/demo';
 import { runDemoShortcut } from '@/lib/demoShortcut';
 import { PERSONA_ORDER } from '@/lib/seed';
 import type { Country } from '@/lib/types';
 
 import { Btn, Chip, Eyebrow, Rule, Txt } from './ui';
+import { CredibilityRing } from './Credibility';
 import { Wordmark } from './Wordmark';
 
 const COUNTRIES: Country[] = ['US', 'DE', 'GB', 'KR'];
@@ -45,18 +48,30 @@ export function TopBar() {
     <View style={[styles.wrap, { paddingTop: insets.top + 6 }]}>
       <View style={styles.row}>
         <Wordmark size={22} />
-        <View style={{ flexDirection: 'row', gap: 2 }}>
-          {personas.map((p) => (
-            <Chip
-              key={p}
-              label={db.users[p].name}
-              active={p === persona}
-              onPress={() => setPersona(p)}
-            />
-          ))}
+        {/* Who this phone is: avatar, name and their credibility at a glance. */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <LinearGradient colors={C.grad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.avatar}>
+            <Txt weight="display" size={13} color="#fff">
+              {user.name.charAt(0)}
+            </Txt>
+          </LinearGradient>
+          <Txt weight="semi" size={14}>
+            {user.name}
+          </Txt>
+          {credibilityOf(user) != null ? <CredibilityRing score={credibilityOf(user)!} size={26} /> : null}
           <Chip label="···" active={demo} onPress={() => setDemo((d) => !d)} />
         </View>
       </View>
+
+      {demo && personas.length ? (
+        // Persona switcher for standalone testing lives in ··· (hidden inside /demo phones).
+        <View style={[styles.row, { justifyContent: 'flex-start', flexWrap: 'wrap', gap: 4 }]}>
+          <Eyebrow>Switch to</Eyebrow>
+          {personas.map((p) => (
+            <Chip key={p} label={db.users[p].name} active={p === persona} onPress={() => setPersona(p)} />
+          ))}
+        </View>
+      ) : null}
 
       {demo ? (
         <View style={[styles.row, { justifyContent: 'flex-start', flexWrap: 'wrap', gap: 4 }]}>
@@ -172,4 +187,5 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   permRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 },
+  avatar: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
 });
