@@ -7,7 +7,8 @@ P=$(grep -E '^FASTSPRING_API_PASSWORD=' .env | cut -d= -f2 | awk '{print $1}')
 AUTH=$(printf '%s:%s' "$U" "$P" | base64)
 UA="Kardza/1.0 (Build for Everyone hackathon)"
 echo "FastSpring API check · $(date '+%Y-%m-%d %H:%M:%S %Z')"
-echo "Store: kardzaa_store (sandbox) · API user: $U · password: ${P:0:3}***${P: -2} (len ${#P})"
+STORE=$(grep -E '^FASTSPRING_STORE=' .env | cut -d= -f2 | awk '{print $1}')
+echo "Store: kardzaa_store (sandbox, $STORE) · API user: $U · password: ${P:0:3}***${P: -2} (len ${#P})"
 echo "Headers sent: Authorization: Basic <base64 user:pass> · User-Agent: $UA · Content-Type: application/json · Accept: application/json"
 echo
 run() {
@@ -20,4 +21,5 @@ run() {
 }
 run GET /products
 run GET /accounts
-run POST /sessions '{"items":[{"product":"holo-binder-theme","quantity":1}]}'
+run POST /sessions '{"contact":{"first":"Alex","last":"Parent","email":"alex.parent@example.com","country":"US"},"items":[{"product":"holo-binder-theme","quantity":1}]}'
+echo "Checkout URL = https://$STORE/session/<id from the session response>"
