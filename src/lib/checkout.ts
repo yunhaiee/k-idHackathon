@@ -48,7 +48,7 @@ export function useCheckout() {
   const confirm = async () => {
     if (!pending) return;
     let orderId: string | undefined;
-    if (pending.via === 'fastspring' && pending.account) {
+    if (pending.via === 'fastspring') {
       // Only mark it paid once FastSpring itself reports the completed order.
       const v = await postJSON<{ ok: boolean; orderId?: string }>('/api/checkout/verify', {
         account: pending.account,

@@ -40,15 +40,47 @@ export async function createSession(buyer: PersonaId, productId: string) {
   return { url: `https://${host}/session/${data.id}`, sessionId: data.id, account: data.account };
 }
 
+type Order = { id?: string; order?: string; completed?: boolean; changed?: number; items?: { product?: string }[] };
+
+async function orderDetails(ids: string[]): Promise<Order[]> {
+  if (!ids.length) return [];
+  const data = (await (await fetch(`${API}/orders/${ids.join(',')}`, { headers: headers() })).json()) as unknown;
+  return Array.isArray(data) ? data : ((data as { orders?: Order[] }).orders ?? [data as Order]);
+}
+
+/**
+ * Checkout URL. FastSpring's test checkout refuses test cards on API-created sessions ("Not supported while in
+ * testing mode"), so by default we open the store's test product page; set FASTSPRING_CHECKOUT_MODE=session
+ * to use the Sessions API instead.
+ */
+export async function checkoutFor(buyer: PersonaId, productId: string) {
+  if (env('FASTSPRING_CHECKOUT_MODE') === 'session') return createSession(buyer, productId);
+  const host = storeHost();
+  if (!host) throw new Error('FASTSPRING_STORE missing');
+  return { url: `https://${host}/${productId}`, sessionId: undefined, account: undefined };
+}
+
+/** Newest completed TEST order for this product placed after `since` (used with the product-page checkout). */
+export async function findTestOrder(productId: string, since: number) {
+  const res = await fetch(`${API}/orders?products=${encodeURIComponent(productId)}&scope=test&days=1&limit=50`, {
+    headers: headers(),
+  });
+  const data = (await res.json()) as { orders?: (string | Order)[] };
+  const list = data.orders ?? [];
+  const orders =
+    typeof list[0] === 'string' ? await orderDetails((list as string[]).slice(-20)) : (list as Order[]);
+  const hit = orders
+    .filter((o) => o.completed && (o.changed ?? 0) >= since - 60_000 && o.items?.some((i) => i.product === productId))
+    .sort((a, b) => (b.changed ?? 0) - (a.changed ?? 0))[0];
+  return hit ? (hit.id ?? hit.order ?? 'verified') : null;
+}
+
 /** Find a completed order for this product on the buyer's account, placed after `since`. */
 export async function findCompletedOrder(account: string, productId: string, since: number) {
   const acct = (await (await fetch(`${API}/accounts/${account}`, { headers: headers() })).json()) as { orders?: string[] };
   const ids = acct.orders ?? [];
   if (!ids.length) return null;
-  const res = await fetch(`${API}/orders/${ids.slice(-10).join(',')}`, { headers: headers() });
-  const data = (await res.json()) as unknown;
-  type Order = { id?: string; order?: string; completed?: boolean; changed?: number; items?: { product?: string }[] };
-  const orders: Order[] = Array.isArray(data) ? data : ((data as { orders?: Order[] }).orders ?? [data as Order]);
+  const orders = await orderDetails(ids.slice(-10));
   const hit = orders.find(
     (o) => o.completed && (o.changed ?? Date.now()) >= since - 60_000 && o.items?.some((i) => i.product === productId),
   );

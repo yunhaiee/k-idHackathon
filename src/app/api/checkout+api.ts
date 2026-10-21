@@ -4,7 +4,7 @@ import { getPolicy } from '@/lib/policy';
 import { PRODUCTS } from '@/lib/seed';
 import type { PersonaId } from '@/lib/types';
 import { readDB } from '@/server/db';
-import { createSession } from '@/server/fastspring';
+import { checkoutFor } from '@/server/fastspring';
 
 export async function POST(request: Request) {
   const { persona, productId, payingFor } = (await request.json()) as {
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     return Response.json({ error: 'k-ID rules: this purchase needs a parent', needsParent: true }, { status: 403 });
 
   try {
-    const session = await createSession(persona, productId);
+    const session = await checkoutFor(persona, productId);
     return Response.json({ ...session, via: 'fastspring', since: Date.now() });
   } catch (e) {
     console.warn('[checkout] FastSpring unavailable, simulated:', String(e).slice(0, 200));
