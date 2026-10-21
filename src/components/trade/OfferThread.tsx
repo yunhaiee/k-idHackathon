@@ -2,10 +2,11 @@ import { Image } from 'expo-image';
 import { View } from 'react-native';
 
 import { Btn, Eyebrow, Note, Rule, Txt } from '@/components/ui';
+import { Credibility } from '@/components/Credibility';
 import { WhyChip } from '@/components/WhyChip';
 import { act } from '@/lib/api';
 import { COPY } from '@/lib/copy';
-import { analysisOf, cashOf, credibilityOf, heldForParent, RISK_LABEL } from '@/lib/demo';
+import { analysisOf, cashOf, credibilityOf, type DemoOffer, heldForParent, RISK_LABEL } from '@/lib/demo';
 import { getPolicy } from '@/lib/policy';
 import { C } from '@/lib/theme';
 import type { DB, Offer, PersonaId } from '@/lib/types';
@@ -38,7 +39,9 @@ export function OfferThread({ db, offer, me }: { db: DB; offer: Offer; me: Perso
   const what = [...offered.map((c) => c.name), ...(cash ? [`$${cash}`] : [])].join(' + ') || 'An offer';
 
   // k-ID puts a parent in charge of this receiver's trades and messages: nothing reaches them directly.
-  if (role === 'receiver' && heldForParent(policy) && offer.status === 'pending') {
+  // Held until the parent taps "Let … see it" (offer.parentApproved, set by the server).
+  const released = !!(offer as DemoOffer).parentApproved;
+  if (role === 'receiver' && heldForParent(policy) && !released && (offer.status === 'pending' || offer.status === 'needs-parent')) {
     const blocked = messages.some((m) => m.risk?.level === 'high');
     return (
       <View style={{ gap: 12, paddingVertical: 8 }}>
@@ -55,11 +58,7 @@ export function OfferThread({ db, offer, me }: { db: DB; offer: Offer; me: Perso
         {role === 'sender' ? `Your offer to ${other.name}` : `${other.name}'s offer`} ·{' '}
         {offer.status === 'needs-parent' ? 'waiting for a parent' : offer.status}
       </Eyebrow>
-      {credibility != null ? (
-        <Txt size={12} color={C.muted}>
-          {`${role === 'sender' ? 'You' : sender.name} · ${COPY.sender.credibility(credibility)}`}
-        </Txt>
-      ) : null}
+      {credibility != null ? <Credibility score={credibility} prefix={role === 'sender' ? 'You' : sender.name} /> : null}
       <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
         {offered.map((c) => (
           <Image key={c.id} source={c.image} style={{ width: 44, height: 62 }} contentFit="contain" />
@@ -92,6 +91,7 @@ export function OfferThread({ db, offer, me }: { db: DB; offer: Offer; me: Perso
           msg={m}
           viewer={me}
           viewerName={db.users[me].name}
+          released={released}
           policy={policy}
           from={db.users[m.fromId]}
         />

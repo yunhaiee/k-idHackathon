@@ -173,6 +173,19 @@ const db = await mutate((d) => {
 And the same `analyzeOffer` (no transcript) in `createOffer`'s route, so the fairness verdict exists before any voice note. Add `analysis?: OfferAnalysis` to `Offer` in `types.ts`.
 Note `msg.risk.reasons` becomes risk **types**; MessageView only shows reasons to adults, so that's fine, or keep `ruleCheck` reasons there.
 
+### R4. ⛔ Delivery decided by policy: hold, Block, Let see it, credibility (`trade.ts`, `state+api.ts`)
+
+All four buttons/views are built and call these actions; until they exist, Anna's tap shows "This needs the server update".
+They're the Round 1 items **2, 3, 4** below, with one change from Oliver's new script:
+
+- **Hold** (Round 1 §2): unchanged. ⛔ Without it the offer is still delivered to Leo server-side; the UI hides it, but a real phone on an old build wouldn't.
+- **`parentReviewOffer`** (Round 1 §2) is what **[Let Leo see it]** calls with `{ offerId, by, approve: true }`. Set `offer.parentApproved = true`, status `pending`.
+  **Change:** do **not** skip the second parent step afterwards. The script says "any trade he agrees to needs Anna's final approval", which `respondOffer` already does (`needs-parent` request).
+  When `parentApproved` is set, the UI shows Leo the offer + voice note with Maya's scam banner and a play button.
+- **`block`** (Round 1 §3) is what **[Block Devon]** calls with `{ by, childId, blockedId }`. The UI reads `users[childId].blocked` and shows "Devon can't contact Leo again."
+  Also reject `createOffer` / `/api/voice` / `/api/message` from a blocked sender (throw `'blocked'`), so Devon really can't reach Leo.
+- **Credibility −5** (Round 1 §4): ⛔ for the "62 → 57" beat. The UI animates any change to `users.devon.credibility` live (offer cards + Me tab).
+
 ## Round 1 audit: does each demo step work? (tested on my laptop, `localhost:8082`, real k-ID + live Modulate)
 
 | # | Step | Status | What's true today |

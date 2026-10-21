@@ -24,6 +24,8 @@ export type DemoOffer = Offer & {
 export const cashOf = (o: Offer) => (o as DemoOffer).cashUsd ?? 0;
 export const analysisOf = (o: Offer) => (o as DemoOffer).analysis;
 export const credibilityOf = (u: User) => (u as SeedUser).credibility;
+/** Who this child's parent blocked (User.blocked, set by the server's `block` action). */
+export const blockedOf = (u: User) => (u as User & { blocked?: string[] }).blocked ?? [];
 /** Object pronoun from the seed's people data ("asking him…"); "them" when none is set. */
 export const pronounOf = (u: User) => (u as SeedUser).pronoun ?? 'them';
 

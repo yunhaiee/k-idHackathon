@@ -3,17 +3,18 @@ import { useState } from 'react';
 import { View } from 'react-native';
 
 import { CheckoutSheet } from '@/components/CheckoutSheet';
+import { Credibility } from '@/components/Credibility';
 import { OfferThread } from '@/components/trade/OfferThread';
 import { Btn, Eyebrow, H, Note, Page, Rule, Txt } from '@/components/ui';
 import { act, useDB } from '@/lib/api';
 import { useCheckout } from '@/lib/checkout';
 import { COPY } from '@/lib/copy';
-import { cashOf, credibilityOf, type DemoOffer, pronounOf } from '@/lib/demo';
+import { blockedOf, cashOf, credibilityOf, type DemoOffer, pronounOf } from '@/lib/demo';
 import { getPolicy } from '@/lib/policy';
 import { PRODUCTS } from '@/lib/seed';
 import { useDevice } from '@/lib/device';
 import { C } from '@/lib/theme';
-import type { DB, PersonaId } from '@/lib/types';
+import type { DB } from '@/lib/types';
 
 const cardsValue = (db: DB, ids: string[]) => ids.reduce((s, id) => s + (db.cards.find((c) => c.id === id)?.priceUsd ?? 0), 0);
 
@@ -21,8 +22,8 @@ export default function FamilyOrMe() {
   const db = useDB();
   const { persona } = useDevice();
   const checkout = useCheckout();
-  // Block isn't stored on the server yet (NOTES_FOR_YUNHA.md); this keeps the choice visible on this device.
-  const [blocked, setBlocked] = useState<PersonaId[]>([]);
+  // Per-alert note when a server action isn't there yet (NOTES_FOR_YUNHA.md, R4), so a tap never fails silently.
+  const [problem, setProblem] = useState<Record<string, string>>({});
   if (!db) return null;
   const me = db.users[persona];
   const policy = getPolicy(me);
@@ -38,6 +39,20 @@ export default function FamilyOrMe() {
   const alerts = db.alerts.filter(
     (a) => a.parentId === persona && !a.read && (a.messageId || !a.offerId || !reviewed.has(a.offerId)),
   );
+  // Offers that already have a safety alert are decided there (Block / Let … see it), not in the review list.
+  const alerted = new Set(alerts.filter((a) => a.messageId && a.offerId).map((a) => a.offerId!));
+  const openReviews = reviews.filter((o) => !alerted.has(o.id));
+
+  /** Run a server action; returns false (and notes why on that row) if the server doesn't know it yet. */
+  const tryAct = async (row: string, body: Record<string, unknown>) => {
+    const res = (await act(body)) as DB & { error?: string };
+    if (res.error) {
+      setProblem((p) => ({ ...p, [row]: /unknown action/i.test(res.error!) ? COPY.parent.needsServer : res.error! }));
+      return false;
+    }
+    setProblem((p) => ({ ...p, [row]: '' }));
+    return true;
+  };
   const credibility = credibilityOf(me);
   const offerOf = (id: string) => db.offers.find((o) => o.id === id) as DemoOffer | undefined;
 
@@ -49,7 +64,7 @@ export default function FamilyOrMe() {
         {policy.band === 'kid' ? 'Kid account' : policy.band === 'teen' ? 'Teen account' : 'Adult account'} ·{' '}
         {policy.countryName}
       </Txt>
-      {credibility != null ? <Txt weight="semi">{COPY.sender.credibility(credibility)}</Txt> : null}
+      {credibility != null ? <Credibility score={credibility} size={15} /> : null}
 
       {kids.length ? (
         <>
@@ -73,29 +88,38 @@ export default function FamilyOrMe() {
                     offerOf(msg.offerId)?.analysis?.reasonForParent,
                   )
                 : a.reason;
-            const isBlocked = sender ? blocked.includes(sender.id) : false;
+            const child = db.users[a.childId];
+            const isBlocked = !!sender && blockedOf(child).includes(sender.id);
+            const isReleased = !!(msg && offerOf(msg.offerId)?.parentApproved);
             return (
               <View key={a.id} style={{ gap: 8 }}>
-                <Note tone="danger" title={COPY.parent.alertTitle(db.users[a.childId].name)}>
+                <Note tone="danger" title={COPY.parent.alertTitle(child.name)}>
                   {reason}
                 </Note>
-                <View style={{ flexDirection: 'row', gap: 8 }}>
-                  {sender ? (
+                {isBlocked || isReleased ? (
+                  <View style={{ gap: 8 }}>
+                    <Note tone="ok" title={isBlocked ? COPY.parent.blocked(sender!.name, child.name) : COPY.parent.released(child.name)} />
+                    <Btn label={COPY.parent.dismiss} kind="quiet" onPress={() => act({ action: 'readAlert', alertId: a.id })} />
+                  </View>
+                ) : sender && msg ? (
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
                     <Btn
-                      label={isBlocked ? `${sender.name} blocked` : COPY.parent.block(sender.name)}
+                      label={COPY.parent.block(sender.name)}
                       kind="danger"
-                      disabled={isBlocked}
-                      onPress={() => setBlocked((b) => [...b, sender.id])}
+                      onPress={() => tryAct(a.id, { action: 'block', by: persona, childId: child.id, blockedId: sender.id })}
                       style={{ flex: 1 }}
                     />
-                  ) : null}
-                  <Btn
-                    label={COPY.parent.dismiss}
-                    kind="quiet"
-                    onPress={() => act({ action: 'readAlert', alertId: a.id })}
-                    style={{ flex: 1 }}
-                  />
-                </View>
+                    <Btn
+                      label={COPY.parent.letSee(child.name)}
+                      kind="quiet"
+                      onPress={() => tryAct(a.id, { action: 'parentReviewOffer', offerId: msg.offerId, by: persona, approve: true })}
+                      style={{ flex: 1 }}
+                    />
+                  </View>
+                ) : (
+                  <Btn label={COPY.parent.dismiss} kind="quiet" onPress={() => act({ action: 'readAlert', alertId: a.id })} />
+                )}
+                {problem[a.id] ? <Txt size={12} color={C.warning}>{problem[a.id]}</Txt> : null}
               </View>
             );
           })}
@@ -103,9 +127,9 @@ export default function FamilyOrMe() {
           <Rule />
           <Eyebrow color={C.accent}>Needs your OK</Eyebrow>
           <CheckoutSheet checkout={checkout} />
-          {requests.length === 0 && reviews.length === 0 ? <Txt color={C.muted}>Nothing waiting.</Txt> : null}
+          {requests.length === 0 && openReviews.length === 0 ? <Txt color={C.muted}>Nothing waiting.</Txt> : null}
 
-          {reviews.map((o) => {
+          {openReviews.map((o) => {
             const sender = db.users[o.fromId];
             const child = db.users[o.toId];
             const listing = db.listings.find((l) => l.id === o.listingId);
@@ -116,16 +140,21 @@ export default function FamilyOrMe() {
                 <Txt weight="semi">
                   {COPY.parent.offerReview(sender.name, getPolicy(sender).band, child.name, offered, card?.name ?? 'card', card?.priceUsd ?? 0)}
                 </Txt>
+                {problem[o.id] ? <Txt size={12} color={C.warning}>{problem[o.id]}</Txt> : null}
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   <Btn
                     label={COPY.parent.decline}
                     kind="quiet"
-                    onPress={() => act({ action: 'respondOffer', offerId: o.id, by: child.id, accept: false })}
+                    onPress={async () => {
+                      // Until parentReviewOffer exists, declining on the child's behalf is the closest real action.
+                      if (!(await tryAct(o.id, { action: 'parentReviewOffer', offerId: o.id, by: persona, approve: false })))
+                        await act({ action: 'respondOffer', offerId: o.id, by: child.id, accept: false });
+                    }}
                     style={{ flex: 1 }}
                   />
                   <Btn
                     label={COPY.parent.approve}
-                    onPress={() => act({ action: 'respondOffer', offerId: o.id, by: child.id, accept: true })}
+                    onPress={() => tryAct(o.id, { action: 'parentReviewOffer', offerId: o.id, by: persona, approve: true })}
                     style={{ flex: 1 }}
                   />
                 </View>

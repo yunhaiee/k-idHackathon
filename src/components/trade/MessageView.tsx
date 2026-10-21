@@ -1,7 +1,8 @@
 import { useAudioPlayer } from 'expo-audio';
+import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
 
-import { Eyebrow, Note, Txt } from '@/components/ui';
+import { Btn, Eyebrow, Note, Txt } from '@/components/ui';
 import { WhyChip } from '@/components/WhyChip';
 import { apiUrl } from '@/lib/api';
 import { COPY } from '@/lib/copy';
@@ -42,12 +43,15 @@ export function MessageView({
   msg,
   viewer,
   viewerName,
+  released,
   policy,
   from,
 }: {
   msg: Message;
   viewer: PersonaId;
   viewerName: string;
+  /** The receiver's parent let this through ("Let … see it"): show it with the scam warning. */
+  released?: boolean;
   policy: Policy;
   from: User;
 }) {
@@ -67,7 +71,7 @@ export function MessageView({
     );
 
   // Kid: risky messages never reach them.
-  if (policy.voice === 'hide-on-risk' && risky)
+  if (policy.voice === 'hide-on-risk' && risky && !released)
     return (
       <View style={{ gap: 8 }}>
         <Note tone="danger" title={COPY.voice.hidden} />
@@ -80,17 +84,21 @@ export function MessageView({
 
   // Teen: the risky voice note is delivered with personal details hidden, under a scam banner. It plays
   // once the teen has voice notes on in k-ID (player-managed); until then they read the redacted transcript.
-  if ((policy.voice === 'redact' || policy.voice === 'none') && risky && msg.kind === 'voice')
+  const canPlay = policy.voice === 'redact' || !!released;
+  if ((policy.voice === 'redact' || policy.voice === 'none' || released) && risky && msg.kind === 'voice')
     return (
       <View style={{ gap: 6 }}>
         <Eyebrow>{label}</Eyebrow>
         <Note tone="danger" title={COPY.voice.scamBanner} />
-        {msg.audioUrl && policy.voice === 'redact' ? <Play url={msg.audioUrl} /> : null}
+        {msg.audioUrl && canPlay ? <Play url={msg.audioUrl} /> : null}
         {text ? <Txt color={C.muted}>{text}</Txt> : null}
-        {policy.voice === 'none' ? (
-          <Txt size={12} color={C.muted}>
-            {COPY.voice.offHint}
-          </Txt>
+        {!canPlay ? (
+          <View style={{ gap: 6 }}>
+            <Txt size={12} color={C.muted}>
+              {COPY.voice.offHint}
+            </Txt>
+            <Btn label={COPY.voice.turnOn} kind="quiet" onPress={() => router.push('/settings')} />
+          </View>
         ) : null}
         {checked ? (
           <Txt size={11} color={C.muted}>

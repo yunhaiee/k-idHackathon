@@ -65,7 +65,8 @@ export const COPY = {
     remove: 'Remove',
     checking: 'Checking voice note…',
     simulated: '(voice check simulated)',
-    offHint: 'Voice notes are off for you. Turn them on in k-ID settings to play them.',
+    offHint: 'Voice notes are off for you. k-ID lets you turn them on yourself.',
+    turnOn: 'Turn on voice notes (k-ID)',
     /** Receiver whose parent decides (kid band): nothing arrives but this. */
     hidden: 'A message was hidden for your safety. We told your parent.',
     /** Same receiver, offer with nothing risky in it: it waits for the parent. */
