@@ -3,9 +3,9 @@ import { Link } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Price } from '@/components/Price';
-import { Eyebrow, H, Note, Page, Rule, Txt } from '@/components/ui';
+import { Chip, Eyebrow, H, Note, Page, Rule, Txt } from '@/components/ui';
 import { useDB } from '@/lib/api';
-import { tradeNeedsGuardianOptIn, tradeNeedsParentApproval } from '@/lib/demo';
+import { tradeNeedsParentApproval, tradingApprovedByParent } from '@/lib/demo';
 import { COPY } from '@/lib/copy';
 import { useDevice } from '@/lib/device';
 import { getPolicy } from '@/lib/policy';
@@ -30,8 +30,9 @@ export default function Market() {
         </Note>
       ) : tradeNeedsParentApproval(policy) ? (
         <Note title={COPY.market.parentChecks}>{COPY.market.parentChecksBody}</Note>
-      ) : tradeNeedsGuardianOptIn(policy) ? (
-        <Note title={COPY.market.guardianOptIn}>{COPY.market.guardianOptInBody}</Note>
+      ) : tradingApprovedByParent(me) ? (
+        // A guardian already turned trading on in k-ID: a quiet confirmation, no banner.
+        <Chip label={COPY.market.approvedByParent} active color={C.success} />
       ) : null}
 
       {db.listings.map((l) => {

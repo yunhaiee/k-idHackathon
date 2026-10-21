@@ -31,6 +31,7 @@ export const COPY = {
   market: {
     aiPriced: 'Priced by AI',
     requested: '✓ Requested',
+    approvedByParent: '✓ Trading approved by parent',
     countered: 'Countered',
     parentChecks: 'A grown-up checks every trade',
     parentChecksBody: 'Your parent sees each trade before it happens.',
