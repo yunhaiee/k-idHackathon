@@ -12,6 +12,15 @@ export type SeedUser = User & { credibility?: number };
 /** Persona order for the switcher and the /demo phones. */
 export const PERSONA_ORDER = ['maya', 'leo', 'devon', 'anna'].map(P);
 
+/** The /demo scenario: who sends the lowball, on which card, and which phones sit side by side. */
+export const DEMO = {
+  sender: P('devon'),
+  card: 'Charizard',
+  cashUsd: 20,
+  /** Each entry is one phone frame; a pair shares a frame with a toggle. */
+  phones: [[P('maya')], [P('leo')], [P('devon'), P('anna')]],
+};
+
 /** Listed cards whose price came from the AI price check ("Priced by AI"). */
 export const AI_PRICED_CARD_IDS = ['c-charizard-maya', 'c-charizard-leo'];
 
